@@ -172,6 +172,7 @@ F1700..F18FF; Semtog
 F1900..F19FF; Sitelen Pona
 F1B00..F1C3F; Shidinn
 F1C40..F1C7F; Titi Pula
+F1C80..F1C9F; Sitelen Pona Radicals
 """)
 
 # cf
