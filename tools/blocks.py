@@ -169,8 +169,23 @@ F0000..F0E6F; Kinya Syllables
 F0E70..F16AF; Pikto
 F16B0..F16DF; Derani
 F1700..F18FF; Semtog
+""")
+
+# cf
+if 'c' in args or 't' in args: # uCsur, Tokipona
+	print("""
 F1900..F19FF; Sitelen Pona
+""")
+
+# cf
+if 'c' in args: # uCsur
+	print("""
 F1B00..F1C3F; Shidinn
+""")
+
+# cf
+if 'c' in args or 't' in args: # uCsur, Tokipona
+	print("""
 F1C40..F1C7F; Titi Pula
 F1C80..F1C9F; Sitelen Pona Radicals
 """)
