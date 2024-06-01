@@ -191,6 +191,12 @@ F1C80..F1C9F; Sitelen Pona Radicals
 """)
 
 # cf
+if 'c' in args: # uCsur
+	print("""
+F2000..F267F; Sadalian
+""")
+
+# cf
 if 'p' in args: # Presentationforms
 	print('FA700..FA71F; Modifier Tone Letter Presentation Forms')
 	print('FA720..FA7FF; Latin Presentation Forms')
@@ -270,3 +276,4 @@ if 'l' in args: # Legacycomputing
 if 't' in args: # Tokipona
 	if 'tt' in args:
 		print('FFD00..FFDFF; Sitelen Pona Presentation Forms-C')
+		print('FFE00..FFEFF; Sitelen Pona Presentation Forms-D')
