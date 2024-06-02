@@ -1,0 +1,5 @@
+@flag --modular-font-elements
+@substring m
+@file Blocks.txt
+F000..F0FF; Modular Font Elements
+F100..F1FF; Modular Font Elements Extended

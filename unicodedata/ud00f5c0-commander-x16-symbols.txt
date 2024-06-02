@@ -1,0 +1,6 @@
+@flag --commander-x16-symbols
+@substring x
+@file Blocks.txt
+F5C0..F5FF; Commander X16 Symbols
+@file UnicodeData.txt
+F5FF;COMMANDER X16 LOGO;So;0;ON;;;;;N;;;;;

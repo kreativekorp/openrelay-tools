@@ -1,0 +1,4 @@
+@flag --semtog
+@substring c
+@file Blocks.txt
+F1700..F18FF; Semtog

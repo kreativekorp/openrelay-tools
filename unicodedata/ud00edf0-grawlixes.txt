@@ -1,0 +1,9 @@
+@flag --grawlixes
+@substring c
+@file Blocks.txt
+EDF0..EDFF; Grawlixes
+@file UnicodeData.txt
+EDF0;JARN;So;0;L;;;;;N;;;;;
+EDF1;QUIMP;So;0;L;;;;;N;;;;;
+EDF2;NITTLE;So;0;L;;;;;N;;;;;
+EDF3;GRAWLIX;So;0;L;;;;;N;;;;;

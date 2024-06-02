@@ -1,0 +1,4 @@
+@flag --c64-os-symbols
+@substring x
+@file Blocks.txt
+F590..F5BF; C64-OS Symbols
