@@ -1911,20 +1911,23 @@ def printFileNames():
 				items.append(fmt % fileNames[k])
 		print(''.join(items))
 
-def compilePUAA(paths, verbose=False):
-	puaa = PuaaTable()
+def compilePUAA(paths, puaa=None, verbose=False):
+	if puaa is None:
+		puaa = PuaaTable()
 	def compile(path):
 		if os.path.isdir(path):
 			for f in os.listdir(path):
 				if f[0] != '.':
 					compile(os.path.join(path, f))
 		else:
-			codec = getCodec(os.path.basename(path))
-			if codec is not None:
-				if verbose:
-					print('Compiling from %s...' % codec.fileName)
-				with io.open(path, mode='r', encoding='utf8') as f:
-					codec.compile(puaa, f)
+			fileName = os.path.basename(path)
+			codec = getCodec(fileName)
+			if codec is None:
+				codec = PuaaUnihanCodec(fileName, [])
+			if verbose:
+				print('Compiling from %s...' % fileName)
+			with io.open(path, mode='r', encoding='utf8') as f:
+				codec.compile(puaa, f)
 	for path in paths:
 		compile(path)
 	return puaa
@@ -1932,14 +1935,24 @@ def compilePUAA(paths, verbose=False):
 def decompilePUAA(puaa, dst, verbose=False):
 	if not os.path.exists(dst):
 		os.makedirs(dst)
+	remaining = {}
+	for subtable in puaa.subtables:
+		remaining[subtable.propertyName] = True
+	def decompile(codec):
+		if verbose:
+			print('Decompiling to %s...' % codec.fileName)
+		with io.open(os.path.join(dst, codec.fileName), mode='w', encoding='utf8') as f:
+			codec.decompile(puaa, f)
+		for propertyName in codec.propertyNames:
+			if propertyName in remaining:
+				del remaining[propertyName]
 	for codec in CODECS:
 		for propertyName in codec.propertyNames:
 			if puaa.subtable(propertyName) is not None:
-				if verbose:
-					print('Decompiling to %s...' % codec.fileName)
-				with io.open(os.path.join(dst, codec.fileName), mode='w', encoding='utf8') as f:
-					codec.decompile(puaa, f)
+				decompile(codec)
 				break
+	if len(remaining) > 0:
+		decompile(PuaaUnihanCodec('UnknownProperties.txt', remaining.keys()))
 
 
 def ifExists(path):
@@ -1964,7 +1977,7 @@ def compile(args):
 		print()
 		printFileNames()
 		print()
-		print('Files other than those listed above will be ignored.')
+		print('Files other than those listed above will be treated as Unihan property files.')
 		print()
 	if not args:
 		printHelp()
