@@ -1287,7 +1287,7 @@ class HangulSyllableTypeCodec(PuaaCodec):
 		for run in runs:
 			print(u'%-14s; %s' % (joinRange(run), run.value), file=f)
 
-class IndicPositionalPuaaCategoryCodec(PuaaCategoryCodec):
+class IndicPositionalCategoryCodec(PuaaCategoryCodec):
 	def __init__(self):
 		PuaaCategoryCodec.__init__(self, 'IndicPositionalCategory.txt', 'Indic_Positional_Category', [
 			'Right', 'Left', 'Visual_Order_Left', 'Left_And_Right',
@@ -1296,7 +1296,7 @@ class IndicPositionalPuaaCategoryCodec(PuaaCategoryCodec):
 			'Top_And_Bottom_And_Right', 'Top_And_Bottom_And_Left', 'Overstruck'
 		])
 
-class IndicSyllabicPuaaCategoryCodec(PuaaCategoryCodec):
+class IndicSyllabicCategoryCodec(PuaaCategoryCodec):
 	def __init__(self):
 		PuaaCategoryCodec.__init__(self, 'IndicSyllabicCategory.txt', 'Indic_Syllabic_Category', [
 			'Bindu', 'Visarga', 'Avagraha', 'Nukta', 'Virama', 'Pure_Killer',
@@ -1688,6 +1688,10 @@ class UnicodeDataCodec(PuaaCodec):
 		for cp, line in sortedMap(lines):
 			print(u';'.join(u'' if field is None else field for field in line), file=f)
 
+class UnihanCodec(PuaaUnihanCodec):
+	def __init__(self):
+		PuaaUnihanCodec.__init__(self, 'Unihan.txt', [])
+
 class UnihanDictionaryIndicesCodec(PuaaUnihanCodec):
 	def __init__(self):
 		PuaaUnihanCodec.__init__(self, 'Unihan_DictionaryIndices.txt', [
@@ -1863,8 +1867,8 @@ CODECS = [
 	EquivalentUnifiedIdeographCodec(),
 	GraphemeBreakPropertyCodec(),
 	HangulSyllableTypeCodec(),
-	IndicPositionalPuaaCategoryCodec(),
-	IndicSyllabicPuaaCategoryCodec(),
+	IndicPositionalCategoryCodec(),
+	IndicSyllabicCategoryCodec(),
 	JamoCodec(),
 	LineBreakCodec(),
 	NameAliasesCodec(),
@@ -1876,6 +1880,7 @@ CODECS = [
 	SpecialCasingCodec(),
 	TangutSourcesCodec(),
 	UnicodeDataCodec(),
+	UnihanCodec(),
 	UnihanDictionaryIndicesCodec(),
 	UnihanDictionaryLikeDataCodec(),
 	UnihanIRGSourcesCodec(),
@@ -1911,7 +1916,7 @@ def printFileNames():
 				items.append(fmt % fileNames[k])
 		print(''.join(items))
 
-def compilePUAA(paths, puaa=None, verbose=False):
+def compilePUAA(paths, puaa=None, assumeUnihan=False, verbose=False):
 	if puaa is None:
 		puaa = PuaaTable()
 	def compile(path):
@@ -1923,7 +1928,14 @@ def compilePUAA(paths, puaa=None, verbose=False):
 			fileName = os.path.basename(path)
 			codec = getCodec(fileName)
 			if codec is None:
-				codec = PuaaUnihanCodec(fileName, [])
+				if assumeUnihan:
+					if verbose:
+						print('Assuming %s is a Unihan property file.' % fileName)
+					codec = PuaaUnihanCodec(fileName, [])
+				else:
+					if verbose:
+						print('Ignoring unknown property file %s.' % fileName)
+					return
 			if verbose:
 				print('Compiling from %s...' % fileName)
 			with io.open(path, mode='r', encoding='utf8') as f:
@@ -1932,7 +1944,7 @@ def compilePUAA(paths, puaa=None, verbose=False):
 		compile(path)
 	return puaa
 
-def decompilePUAA(puaa, dst, verbose=False):
+def decompilePUAA(puaa, dst, includeUnknown=False, verbose=False):
 	if not os.path.exists(dst):
 		os.makedirs(dst)
 	remaining = {}
@@ -1951,7 +1963,7 @@ def decompilePUAA(puaa, dst, verbose=False):
 			if puaa.subtable(propertyName) is not None:
 				decompile(codec)
 				break
-	if len(remaining) > 0:
+	if includeUnknown and len(remaining) > 0:
 		decompile(PuaaUnihanCodec('UnknownProperties.txt', remaining.keys()))
 
 
@@ -1966,6 +1978,8 @@ def compile(args):
 		print('  -d <path>     Specify UCD data file or directory.')
 		print('  -i <path>     Specify source TrueType file.')
 		print('  -o <path>     Specify destination TrueType file.')
+		print('  -u            Treat unknown data files as Unihan property files.')
+		print('  -U            Ignore unknown data files (the default).')
 		print('  -D            Process arguments as UCD data files.')
 		print('  -I            Process arguments as source files.')
 		print('  -O            Process arguments as destination files.')
@@ -1977,8 +1991,6 @@ def compile(args):
 		print()
 		printFileNames()
 		print()
-		print('Files other than those listed above will be treated as Unihan property files.')
-		print()
 	if not args:
 		printHelp()
 		return
@@ -1987,6 +1999,7 @@ def compile(args):
 	outputFiles = []
 	defaultList = dataFiles
 	parsingOptions = True
+	assumeUnihan = False
 	verbose = True
 	argi = 0
 	while argi < len(args):
@@ -2010,6 +2023,10 @@ def compile(args):
 				defaultList = inputFiles
 			elif arg == '-O':
 				defaultList = outputFiles
+			elif arg == '-u':
+				assumeUnihan = True
+			elif arg == '-U':
+				assumeUnihan = False
 			elif arg == '-q':
 				verbose = False
 			elif arg == '-v':
@@ -2025,7 +2042,7 @@ def compile(args):
 	if not dataFiles:
 		print('No data files specified.')
 		return
-	puaa = compilePUAA(dataFiles, verbose=verbose)
+	puaa = compilePUAA(dataFiles, assumeUnihan=assumeUnihan, verbose=verbose)
 	if not inputFiles and not outputFiles:
 		writePUAA(ifExists('puaa.out'), puaa, 'puaa.out', verbose=verbose)
 		return
@@ -2050,6 +2067,8 @@ def decompile(args):
 		print()
 		print('  -i <path>     Specify source TrueType file.')
 		print('  -o <path>     Specify destination directory.')
+		print('  -u            Create UnknownProperties.txt for unknown properties.')
+		print('  -U            Ignore unknown properties (the default).')
 		print('  -I            Process arguments as source files.')
 		print('  -O            Process arguments as destination files.')
 		print('  --            Process remaining arguments as file names.')
@@ -2068,6 +2087,7 @@ def decompile(args):
 	outputFiles = []
 	defaultList = inputFiles
 	parsingOptions = True
+	includeUnknown = False
 	verbose = True
 	argi = 0
 	while argi < len(args):
@@ -2086,6 +2106,10 @@ def decompile(args):
 				defaultList = inputFiles
 			elif arg == '-O':
 				defaultList = outputFiles
+			elif arg == '-u':
+				includeUnknown = True
+			elif arg == '-U':
+				includeUnknown = False
 			elif arg == '-q':
 				verbose = False
 			elif arg == '-v':
@@ -2107,13 +2131,13 @@ def decompile(args):
 		puaa = readPUAA(inputFiles[0], verbose=verbose)
 		if puaa is not None:
 			for outputFile in outputFiles:
-				decompilePUAA(puaa, outputFile, verbose=verbose)
+				decompilePUAA(puaa, outputFile, includeUnknown=includeUnknown, verbose=verbose)
 		return
 	if len(outputFiles) == 1:
 		for inputFile in inputFiles:
 			puaa = readPUAA(inputFile, verbose=verbose)
 			if puaa is not None:
-				decompilePUAA(puaa, outputFiles[0], verbose=verbose)
+				decompilePUAA(puaa, outputFiles[0], includeUnknown=includeUnknown, verbose=verbose)
 		return
 	if len(inputFiles) > 1:
 		print('Too many input files.')

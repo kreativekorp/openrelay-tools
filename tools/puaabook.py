@@ -360,7 +360,7 @@ def createReport(ucd, ttf, allChars=False):
 
 def printReportNTHTML(report, file=None):
 	name, version, count, blocks, reportInfo = report
-	print(u'<html>', file=file)
+	print(u'<html lang="en">', file=file)
 	print(u'<head>', file=file)
 	print(u'<style>', file=file)
 	print(u'* { margin: 0; padding: 0; }', file=file)
@@ -497,7 +497,7 @@ def main(args):
 		if ucdFiles:
 			for ucdFile in ucdFiles:
 				if ucdFile.lower().endswith('.txt') or os.path.isdir(ucdFile):
-					ucd = compilePUAA([ucdFile], puaa=ucd)
+					ucd = compilePUAA([ucdFile], puaa=ucd, assumeUnihan=os.path.isfile(ucdFile))
 				else:
 					ucd = readUCD(ucdFile, puaa=ucd)
 		else:
@@ -509,7 +509,7 @@ def main(args):
 		if dataFiles:
 			for dataFile in dataFiles:
 				if dataFile.lower().endswith('.txt') or os.path.isdir(dataFile):
-					ttf.puaa = compilePUAA([dataFile], puaa=ttf.puaa)
+					ttf.puaa = compilePUAA([dataFile], puaa=ttf.puaa, assumeUnihan=os.path.isfile(dataFile))
 				else:
 					ttf.puaa = readUCD(dataFile, puaa=ttf.puaa)
 		report = createReport(ucd, ttf, allChars=allChars)
