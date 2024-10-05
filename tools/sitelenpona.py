@@ -33,14 +33,15 @@ def readAsukiSource(filename):
 				index += 1
 	return asuki
 
-def writeAsukiFeatures(filename, asuki):
+def writeAsukiFeatures(filename, asuki, spaces=True):
 	with open(filename, 'w') as f:
 		f.write('feature liga {\n\n')
 		for sk0 in sorted(asuki.keys()):
-			f.write('  # Sequences of length %d (%d + space)\n' % (1-sk0, -sk0))
-			for sk1 in sorted(asuki[sk0].keys()):
-				f.write('  %s\n' % asuki[sk0][sk1].subRuleSpace)
-			f.write('\n')
+			if spaces:
+				f.write('  # Sequences of length %d (%d + space)\n' % (1-sk0, -sk0))
+				for sk1 in sorted(asuki[sk0].keys()):
+					f.write('  %s\n' % asuki[sk0][sk1].subRuleSpace)
+				f.write('\n')
 			f.write('  # Sequences of length %d\n' % -sk0)
 			for sk1 in sorted(asuki[sk0].keys()):
 				f.write('  %s\n' % asuki[sk0][sk1].subRule)
@@ -251,6 +252,7 @@ def main(args):
 	joinerSrc = 'joiners.txt'
 	joinerOut = 'joiners.fea'
 	glyphNameSrc = None
+	spaces = True
 	# Parse arguments
 	argType = None
 	for arg in args:
@@ -277,6 +279,10 @@ def main(args):
 		elif arg.startswith('-'):
 			if arg in ['-a', '-A', '-t', '-T', '-e', '-E', '-j', '-J', '-g']:
 				argType = arg
+			elif arg == '-s':
+				spaces = False
+			elif arg == '-S':
+				spaces = True
 			else:
 				print(('Unknown option: %s' % arg), file=sys.stderr)
 		else:
@@ -286,9 +292,9 @@ def main(args):
 		print('No source font provided', file=sys.stderr)
 	else:
 		asuki = readAsukiSource(asukiSrc)
-		writeAsukiFeatures(asukiOut, asuki)
+		writeAsukiFeatures(asukiOut, asuki, spaces=spaces)
 		atuki = readAsukiSource(atukiSrc)
-		writeAsukiFeatures(atukiOut, atuki)
+		writeAsukiFeatures(atukiOut, atuki, spaces=spaces)
 		glyphNames = readGlyphNames(glyphNameSrc)
 		extendable = readExtendableSource(extendableSrc)
 		writeExtendableFeatures(extendableOut, glyphNames, extendable)
