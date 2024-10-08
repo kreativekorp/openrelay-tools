@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from psname import psName, psNames
+from psname import psName, psNames, psUnicode
 import re
 import sys
 
@@ -49,26 +49,39 @@ def writeAsukiFeatures(filename, asuki, spaces=True):
 		f.write('} liga;\n')
 
 def readSFDGlyphNames(filename):
+	currentName = None
 	glyphNames = []
+	glyphWidths = {}
 	with open(filename, 'r') as f:
 		for line in f:
 			line = line.strip()
 			if line.startswith('StartChar: '):
-				line = line.split(' ', 1)[1]
-				glyphNames.append(line)
-	return glyphNames
+				currentName = line.split(' ', 1)[1]
+				glyphNames.append(currentName)
+			if line.startswith('Width: '):
+				width = int(line.split(' ', 1)[1])
+				glyphWidths[currentName] = width
+	return (glyphNames, glyphWidths)
 
 def readKbitxGlyphNames(filename):
+	currentName = None
 	glyphNames = []
+	glyphWidths = {}
 	with open(filename, 'r') as f:
 		for line in f:
 			m = re.search('<g ([un])="([^\"]+)"', line)
 			if m:
 				if m.group(1) == 'u':
-					glyphNames.append(psName(int(m.group(2))))
+					currentName = psName(int(m.group(2)))
+					glyphNames.append(currentName)
 				if m.group(1) == 'n':
-					glyphNames.append(m.group(2))
-	return glyphNames
+					currentName = m.group(2)
+					glyphNames.append(currentName)
+				m = re.search(' w="([0-9]+)"', line)
+				if m:
+					width = int(m.group(1))
+					glyphWidths[currentName] = width
+	return (glyphNames, glyphWidths)
 
 def readGlyphNames(filename):
 	if filename.endswith('.sfd'):
@@ -107,17 +120,74 @@ class ExtendableLine:
 				return '%s  # %s' % (text, additional)
 		return text
 
+class ApplyRuleLine:
+	def __init__(self, allow, rule):
+		self.allow = allow
+		if rule == 'all' or rule == '*':
+			self.type = 'a'
+			return
+		if rule.startswith('U+') or rule.startswith('u+'):
+			try:
+				self.ranges = [tuple(int(c, 16) for c in r.split('-', 1)) for r in rule[2:].split('+')]
+				self.type = 'u'
+				return
+			except ValueError:
+				pass
+		if rule.startswith('/') and rule.endswith('/'):
+			try:
+				self.regex = re.compile(rule[1:-1])
+				self.type = 'r'
+				return
+			except re.error:
+				pass
+		if rule.startswith('^') or rule.endswith('$'):
+			try:
+				self.regex = re.compile(rule)
+				self.type = 'r'
+				return
+			except re.error:
+				pass
+		self.rule = rule
+		self.type = 's'
+
+	def appliesTo(self, name, splitName=None, codePoint=None):
+		if splitName is None:
+			splitName = name.split('.')
+		if codePoint is None:
+			codePoint = psUnicode(splitName[0])
+		if self.type == 'a':
+			return True
+		if self.type == 'u':
+			for r in self.ranges:
+				if len(r) == 2 and r[0] <= codePoint <= r[1]:
+					return True
+				if len(r) == 1 and r[0] == codePoint:
+					return True
+			return False
+		if self.type == 'r':
+			if self.regex.match(name):
+				return True
+			return False
+		return self.rule == name
+
 def readExtendableSource(filename):
+	applyRules = []
 	extendable = []
 	index = 0
 	with open(filename, 'r') as f:
 		for line in f:
 			line = line.strip()
 			if len(line) > 0 and line[0] != '#':
-				e = ExtendableLine(index, line)
-				extendable.append(e)
-				index += 1
-	return extendable
+				fields = line.split('#', 1)
+				fields = re.split(r'\s+', fields[0].strip(), 1)
+				if fields[0] == 'allow' or fields[0] == 'deny':
+					a = ApplyRuleLine(fields[0] == 'allow', fields[1])
+					applyRules.append(a)
+				else:
+					e = ExtendableLine(index, line)
+					extendable.append(e)
+					index += 1
+	return (extendable, applyRules)
 
 def forwardExtendablePairs(extendable):
 	for e in extendable:
@@ -146,30 +216,150 @@ def kijeExtendablePairs(extendable):
 		if e.forward is not None and e.kijeBoth is not None:
 			yield e.wrap(e.forward, 'extended'), e.wrap(e.kijeBoth, 'extended')
 
-def writeExtendableFeatures(filename, glyphNames, extendable):
+def extendedGlyphNames(extendable):
+	for e in extendable:
+		if e.forward is not None:
+			yield e.forward
+		if e.reverse is not None:
+			yield e.reverse
+		if e.both is not None:
+			yield e.both
+		if e.kijeReverse is not None:
+			yield e.kijeReverse
+		if e.kijeBoth is not None:
+			yield e.kijeBoth
+
+# Glyphs with names starting with these prefixes shall not be automatically cartouched.
+PREFIX_EXCEPTIONS = [
+	# sitelen pona format controls
+	'uF1990', 'uF1991', 'uF1992', 'uF1993', 'uF1994', 'uF1995',
+	'uF1996', 'uF1997', 'uF1998', 'uF1999', 'uF199A', 'uF199B',
+	# titi pula format controls
+	'uF1C7E', 'uF1C7F'
+];
+
+# Glyphs with names ending with these suffixes shall not be automatically cartouched.
+SUFFIX_EXCEPTIONS = [
+	'cartouche', 'extension', 'kijext', 'kijend',
+	'ccart', 'cext', 'ecart', 'eext'
+];
+
+def writeExtendableFeatures(
+	filename, glyphNames, glyphWidths, extendable, applyRules,
+	prefixExceptions=PREFIX_EXCEPTIONS, suffixExceptions=SUFFIX_EXCEPTIONS
+):
+	cartGN = [gn for gn in glyphNames if gn.endswith('.cartouche')]
+	extGN = [gn for gn in glyphNames if gn.endswith('.extension')]
+	cartlessGN = [gn.rsplit('.', 1)[0] for gn in cartGN]
+	extlessGN = [gn.rsplit('.', 1)[0] for gn in extGN]
+	cartZW = [int(gn[1:-6]) for gn in glyphNames if re.match(r'^z[0-9]+[.]ccart$', gn) and '%s.ecart' % gn[0:-6] in glyphNames]
+	extZW = [int(gn[1:-5]) for gn in glyphNames if re.match(r'^z[0-9]+[.]cext$', gn) and '%s.eext' % gn[0:-5] in glyphNames]
+	fxPairs = list(forwardExtendablePairs(extendable))
+	rxPairs = list(reverseExtendablePairs(extendable))
+	kxTriples = list(kijeExtensionTriples(glyphNames))
+	kxPairs = list(kijeExtendablePairs(extendable))
+	exGN = list(extendedGlyphNames(extendable))
+	def cartableFn(gn):
+		gnc = gn.split('.')
+		cp = psUnicode(gnc[0])
+		allow = False
+		for rule in applyRules:
+			if rule.appliesTo(gn, gnc, cp):
+				allow = rule.allow
+		return allow and not (
+			gn in exGN or
+			gnc[0] in prefixExceptions or
+			gnc[-1] in suffixExceptions
+		)
+	cartableGN = [gn for gn in glyphNames if cartableFn(gn)]
 	with open(filename, 'w') as f:
-		f.write('# all glyphs that can be included in a cartouche\n')
-		f.write('@spCartoucheless = [%s];\n\n' % ' '.join(gn.rsplit('.', 1)[0] for gn in glyphNames if gn.endswith('.cartouche')))
-		f.write('# corresponding glyphs with cartouche extension\n')
-		f.write('@spCartouche = [%s];\n\n' % ' '.join(gn for gn in glyphNames if gn.endswith('.cartouche')));
-		f.write('# all glyphs that can be included in a long glyph\n')
-		f.write('@spExtensionless = [%s];\n\n' % ' '.join(gn.rsplit('.', 1)[0] for gn in glyphNames if gn.endswith('.extension')))
-		f.write('# corresponding glyphs with long glyph extension\n')
-		f.write('@spExtension = [%s];\n\n' % ' '.join(gn for gn in glyphNames if gn.endswith('.extension')))
-		f.write('# sitelen pona ideographs that can be made long on the right side\n')
-		f.write('@spExtendable = [\n%s];\n\n' % ''.join('  %s\n' % a for a, e in forwardExtendablePairs(extendable)))
-		f.write('# corresponding glyphs made long on the right side\n')
-		f.write('@spExtended = [\n%s];\n\n' % ''.join('  %s\n' % e for a, e in forwardExtendablePairs(extendable)))
-		f.write('# sitelen pona ideographs that can be made long on the left side\n')
-		f.write('@spReverseExtendable = [\n%s];\n\n' % ''.join('  %s\n' % a for a, e in reverseExtendablePairs(extendable)))
-		f.write('# corresponding glyphs made long on the left side\n')
-		f.write('@spReverseExtended = [\n%s];\n\n' % ''.join('  %s\n' % e for a, e in reverseExtendablePairs(extendable)))
-		f.write('# reverse long glyph extension for kijetesantakalu\n')
-		f.write('@spKijeExtensionless = [%s];\n' % ' '.join(gn for gn, ext, end in kijeExtensionTriples(glyphNames)))
-		f.write('@spKijeExtension = [%s];\n' % ' '.join(ext for gn, ext, end in kijeExtensionTriples(glyphNames)))
-		f.write('@spKijeExtensionEnd = [%s];\n' % ' '.join(end for gn, ext, end in kijeExtensionTriples(glyphNames)))
-		f.write('@spKijeExtendable = [\n%s];\n' % ''.join('  %s\n' % a for a, e in kijeExtendablePairs(extendable)))
-		f.write('@spKijeExtended = [\n%s];\n' % ''.join('  %s\n' % e for a, e in kijeExtendablePairs(extendable)))
+		if cartGN:
+			f.write('# all glyphs with explicit forms for inclusion in a cartouche\n')
+			f.write('@spCartoucheless = [%s];\n\n' % ' '.join(cartlessGN))
+			f.write('# corresponding glyphs with cartouche extension\n')
+			f.write('@spCartouche = [%s];\n\n' % ' '.join(cartGN));
+		if extGN:
+			f.write('# all glyphs with explicit forms for inclusion in a long glyph\n')
+			f.write('@spExtensionless = [%s];\n\n' % ' '.join(extlessGN))
+			f.write('# corresponding glyphs with long glyph extension\n')
+			f.write('@spExtension = [%s];\n\n' % ' '.join(extGN))
+		if cartZW and cartableGN:
+			f.write('# zero-width cartouche extension glyphs per advance width class\n')
+			f.write('@spCartoucheComb = [%s];\n' % ' '.join('z%d.ccart' % zw for zw in cartZW))
+			f.write('@spCartoucheEncl = [%s];\n\n' % ' '.join('z%d.ecart' % zw for zw in cartZW))
+		if extZW and cartableGN:
+			f.write('# zero-width long glyph extension glyphs per advance width class\n')
+			f.write('@spExtensionComb = [%s];\n' % ' '.join('z%d.cext' % zw for zw in extZW))
+			f.write('@spExtensionEncl = [%s];\n\n' % ' '.join('z%d.eext' % zw for zw in extZW))
+		if cartZW and cartableGN:
+			f.write('# glyphs that can be implicitly included in cartouches using the lookup tables below\n')
+			f.write('@spCartoucheAuto = [%s];\n\n' % ' '.join(gn for gn in cartableGN if gn not in cartlessGN))
+		if extZW and cartableGN:
+			f.write('# glyphs that can be implicitly included in long glyphs using the lookup tables below\n')
+			f.write('@spExtensionAuto = [%s];\n\n' % ' '.join(gn for gn in cartableGN if gn not in extlessGN))
+		if cartGN or (cartZW and cartableGN):
+			f.write('# lookup table used when extending cartouches to the right\n')
+			f.write('lookup spCartoucheApplyForward {\n')
+			if cartGN:
+				f.write('  sub @spCartoucheless by @spCartouche;\n')
+			if cartZW and cartableGN:
+				for gn in cartableGN:
+					if gn not in cartlessGN:
+						zw = min(zw for zw in cartZW if zw >= glyphWidths[gn])
+						if zw is not None:
+							f.write('  sub %s by %s z%d.ccart;\n' % (gn, gn, zw))
+			f.write('} spCartoucheApplyForward;\n\n')
+			f.write('# lookup table used when extending cartouches to the left\n')
+			f.write('lookup spCartoucheApplyBackward {\n')
+			if cartGN:
+				f.write('  sub @spCartoucheless by @spCartouche;\n')
+			if cartZW and cartableGN:
+				for gn in cartableGN:
+					if gn not in cartlessGN:
+						zw = min(zw for zw in cartZW if zw >= glyphWidths[gn])
+						if zw is not None:
+							f.write('  sub %s by z%d.ecart %s;\n' % (gn, zw, gn))
+			f.write('} spCartoucheApplyBackward;\n\n')
+		if extGN or (extZW and cartableGN):
+			f.write('# lookup table used when extending long glyphs to the right\n')
+			f.write('lookup spExtensionApplyForward {\n')
+			if extGN:
+				f.write('  sub @spExtensionless by @spExtension;\n')
+			if extZW and cartableGN:
+				for gn in cartableGN:
+					if gn not in extlessGN:
+						zw = min(zw for zw in extZW if zw >= glyphWidths[gn])
+						if zw is not None:
+							f.write('  sub %s by %s z%d.cext;\n' % (gn, gn, zw))
+			f.write('} spExtensionApplyForward;\n\n')
+			f.write('# lookup table used when extending long glyphs to the left\n')
+			f.write('lookup spExtensionApplyBackward {\n')
+			if extGN:
+				f.write('  sub @spExtensionless by @spExtension;\n')
+			if extZW and cartableGN:
+				for gn in cartableGN:
+					if gn not in extlessGN:
+						zw = min(zw for zw in extZW if zw >= glyphWidths[gn])
+						if zw is not None:
+							f.write('  sub %s by z%d.eext %s;\n' % (gn, zw, gn))
+			f.write('} spExtensionApplyBackward;\n\n')
+		if fxPairs:
+			f.write('# sitelen pona ideographs that can be made long on the right side\n')
+			f.write('@spExtendable = [\n%s];\n\n' % ''.join('  %s\n' % a for a, e in fxPairs))
+			f.write('# corresponding glyphs made long on the right side\n')
+			f.write('@spExtended = [\n%s];\n\n' % ''.join('  %s\n' % e for a, e in fxPairs))
+		if rxPairs:
+			f.write('# sitelen pona ideographs that can be made long on the left side\n')
+			f.write('@spReverseExtendable = [\n%s];\n\n' % ''.join('  %s\n' % a for a, e in rxPairs))
+			f.write('# corresponding glyphs made long on the left side\n')
+			f.write('@spReverseExtended = [\n%s];\n\n' % ''.join('  %s\n' % e for a, e in rxPairs))
+		if kxTriples and kxPairs:
+			f.write('# reverse long glyph extension for kijetesantakalu\n')
+			f.write('@spKijeExtensionless = [%s];\n' % ' '.join(gn for gn, ext, end in kxTriples))
+			f.write('@spKijeExtension = [%s];\n' % ' '.join(ext for gn, ext, end in kxTriples))
+			f.write('@spKijeExtensionEnd = [%s];\n' % ' '.join(end for gn, ext, end in kxTriples))
+			f.write('@spKijeExtendable = [\n%s];\n' % ''.join('  %s\n' % a for a, e in kxPairs))
+			f.write('@spKijeExtended = [\n%s];\n' % ''.join('  %s\n' % e for a, e in kxPairs))
 
 class JoinerLine:
 	def __init__(self, index, line):
@@ -295,9 +485,9 @@ def main(args):
 		writeAsukiFeatures(asukiOut, asuki, spaces=spaces)
 		atuki = readAsukiSource(atukiSrc)
 		writeAsukiFeatures(atukiOut, atuki, spaces=spaces)
-		glyphNames = readGlyphNames(glyphNameSrc)
-		extendable = readExtendableSource(extendableSrc)
-		writeExtendableFeatures(extendableOut, glyphNames, extendable)
+		glyphNames, glyphWidths = readGlyphNames(glyphNameSrc)
+		extendable, applyRules = readExtendableSource(extendableSrc)
+		writeExtendableFeatures(extendableOut, glyphNames, glyphWidths, extendable, applyRules)
 		joiners, nimi = readJoinerSource(asukiSrc)
 		joiners, nimi = readJoinerSource(joinerSrc, joiners, nimi)
 		writeJoinerFeatures(joinerOut, joiners, nimi)

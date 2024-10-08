@@ -143,6 +143,13 @@ class SfdChar:
 				splines.append(prop)
 		return splines
 
+	def removeReferences(self):
+		newProps = []
+		for prop in self.properties:
+			if not prop.startswith('Refer: '):
+				newProps.append(prop)
+		self.properties = newProps
+
 	def removeSplines(self, includingMarkers=False):
 		newProps = []
 		inSplineSet = False
@@ -422,6 +429,8 @@ class Sfd:
 					self.chars[ci].removeSplines(int(line[17:]) > 0)
 				elif line == '@@@RemoveSplines':
 					self.chars[ci].removeSplines()
+				elif line == '@@@RemoveReferences':
+					self.chars[ci].removeReferences()
 				elif line.startswith('+++'):
 					self.chars[ci].append(line[3:])
 				elif line.startswith('---'):
