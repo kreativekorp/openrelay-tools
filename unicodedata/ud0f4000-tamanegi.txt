@@ -1,0 +1,17 @@
+@flag --tamanegi
+@substring c
+@file Blocks.txt
+F4000..F407F; Tamanegi
+@file UnicodeData.txt
+F4000;TAMANEGI LETTER A;Lo;0;L;;;;;N;;;;;
+F4001;TAMANEGI LETTER W;Lo;0;L;;;;;N;;;;;
+F4002;TAMANEGI LETTER B;Lo;0;L;;;;;N;;;;;
+F4003;TAMANEGI LETTER X;Lo;0;L;;;;;N;;;;;
+F4004;TAMANEGI LETTER C;Lo;0;L;;;;;N;;;;;
+F4005;TAMANEGI LETTER Y;Lo;0;L;;;;;N;;;;;
+F4006;TAMANEGI LETTER D;Lo;0;L;;;;;N;;;;;
+F4007;TAMANEGI LETTER Z;Lo;0;L;;;;;N;;;;;
+F4008;TAMANEGI LETTER E;Lo;0;L;;;;;N;;;;;
+F4009;TAMANEGI LETTER F;Lo;0;L;;;;;N;;;;;
+F400A;TAMANEGI LETTER G;Lo;0;L;;;;;N;;;;;
+F400B;TAMANEGI LETTER H;Lo;0;L;;;;;N;;;;;
