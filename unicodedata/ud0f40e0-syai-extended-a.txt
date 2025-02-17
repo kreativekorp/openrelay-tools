@@ -1,0 +1,6 @@
+@flag --syai-extended-a
+@substring c
+@file Blocks.txt
+F40E0..F40FF; Syai Extended-A
+@file UnicodeData.txt
+F40E0;SYAI HEXADECIMAL DIGIT TEN;No;0;ON;;;;10;N;;;;;
