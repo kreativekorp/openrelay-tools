@@ -5,4 +5,5 @@ F4100..F413F; Kajitsu Supplement
 @file UnicodeData.txt
 F4100;KAJITSU LETTER C;Lo;0;;;;;;N;;;;;
 F4101;KAJITSU LETTER Q;Lo;0;;;;;;N;;;;;
-F4102;KAJITSU LETTER X;Lo;0;;;;;;N;;;;;
+F4102;KAJITSU LETTER V;Lo;0;;;;;;N;;;;;
+F4103;KAJITSU LETTER X;Lo;0;;;;;;N;;;;;
