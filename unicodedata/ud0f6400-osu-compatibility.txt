@@ -1,0 +1,6 @@
+@flag --osu-compatibility
+@substring o
+@file Blocks.txt
+F6400..F640F; Osu Compatibility
+@file UnicodeData.txt
+F6400;OSU LOGO;So;0;ON;;;;;N;;;;;
