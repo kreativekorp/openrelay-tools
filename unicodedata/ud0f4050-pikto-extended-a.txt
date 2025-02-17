@@ -1,4 +1,0 @@
-@flag --pikto-extended-a
-@substring c
-@file Blocks.txt
-F4050..F41AF; Pikto Extended-A
