@@ -1,5 +1,5 @@
 @flag --kajitsu
-@substring c
+@substring n
 @file Blocks.txt
 F4F0..F4FF; Kajitsu
 @file UnicodeData.txt
