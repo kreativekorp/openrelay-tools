@@ -1,4 +1,0 @@
-@flag --braille-extended-a
-@substring c
-@file Blocks.txt
-F4100..F41FF; Braille Extended-A
