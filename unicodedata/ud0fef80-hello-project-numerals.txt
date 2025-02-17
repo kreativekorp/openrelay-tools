@@ -1,6 +1,6 @@
 @flag --hello-project-numerals
 @file Blocks.txt
-FEF00..FEFFF; Hello Project Numerals
+FEF80..FEFFF; Hello Project Numerals
 @file UnicodeData.txt
 FEF80;MORNING MUSUME DIGIT ZERO;Nd;0;EN;;0;0;0;N;;;;;
 FEF81;MORNING MUSUME DIGIT ONE;Nd;0;EN;;1;1;1;N;;;;;
