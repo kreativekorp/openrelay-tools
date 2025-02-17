@@ -1,5 +1,4 @@
 @flag --j-pop-number-forms
-@substring k
 @file Blocks.txt
 FF6E0..FF6FF; J-Pop Number Forms
 @file UnicodeData.txt
