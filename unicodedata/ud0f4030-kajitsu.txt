@@ -1,7 +1,7 @@
 @flag --kajitsu
 @substring c
 @file Blocks.txt
-F4030..F408F; Kajitsu
+F4030..F404F; Kajitsu
 @file UnicodeData.txt
 F4030;KAJITSU LETTER A;Lo;0;L;;;;;N;;;;;
 F4031;KAJITSU LETTER I;Lo;0;L;;;;;N;;;;;
