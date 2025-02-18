@@ -1,4 +1,0 @@
-@flag --engsvanyali-presentation-forms
-@substring p
-@file Blocks.txt
-FE100..FE1FF; Engsvanyali Presentation Forms
