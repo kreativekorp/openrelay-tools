@@ -1,4 +1,0 @@
-@flag --hacm-presentation-forms
-@substring p
-@file Blocks.txt
-FE700..FE7FF; Hacm Presentation Forms
