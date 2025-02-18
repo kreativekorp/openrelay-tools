@@ -1,4 +1,0 @@
-@flag --liparxe-presentation-forms
-@substring p
-@file Blocks.txt
-FE800..FE82F; Liparxe Presentation Forms
