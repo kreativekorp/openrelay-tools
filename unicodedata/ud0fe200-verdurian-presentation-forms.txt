@@ -1,4 +1,0 @@
-@flag --verdurian-presentation-forms
-@substring p
-@file Blocks.txt
-FE200..FE28F; Verdurian Presentation Forms
