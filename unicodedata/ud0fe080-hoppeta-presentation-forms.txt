@@ -1,7 +1,7 @@
 @flag --hoppeta-presentation-forms
 @substring p
 @file Blocks.txt
-FE080..FE0AF; Hoppeta Presentation Forms
+FE080..FE0FF; Hoppeta Presentation Forms
 @file UnicodeData.txt
 FE081;HOPPETA LETTER SHINKA;Lo;0;L;5FC3 200D F4087;;;;N;;;;;
 FE082;HOPPETA LETTER KOKOROKARA;Lo;0;L;5FC3 200D F409F;;;;N;;;;;
