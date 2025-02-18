@@ -1,7 +1,7 @@
 @flag --tamanegi
 @substring c
 @file Blocks.txt
-F4000..F403F; Tamanegi
+F4000..F401F; Tamanegi
 @file UnicodeData.txt
 F4000;TAMANEGI LETTER A;Lo;0;L;;;;;N;;;;;
 F4001;TAMANEGI LETTER P;Lo;0;L;;;;;N;;;;;
