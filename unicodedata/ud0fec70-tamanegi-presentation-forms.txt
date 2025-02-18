@@ -1,4 +1,0 @@
-@flag --tamanegi-presentation-forms
-@substring p
-@file Blocks.txt
-FEC70..FECFF; Tamanegi Presentation Forms
