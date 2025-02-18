@@ -1,7 +1,7 @@
 @flag --hoppeta
 @substring c
 @file Blocks.txt
-F4080..F40AF; Hoppeta
+F4080..F40DF; Hoppeta
 @file UnicodeData.txt
 F4080;HOPPETA LETTER ZERO;Lo;0;L;;;;0;N;;;;;
 F4081;HOPPETA LETTER SHIMON;Lo;0;L;;;;1;N;;;;;
