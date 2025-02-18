@@ -1,8 +1,0 @@
-@flag --syai-extended-a
-@substring c
-@file Blocks.txt
-F4050..F407F; Syai Extended-A
-@file UnicodeData.txt
-F4050;SYAI IDEOGRAM YAM;Lo;0;L;;;;;N;;;;;
-F4051;SYAI IDEOGRAM CLOTHES;Lo;0;L;;;;;N;;;;;
-F4052;SYAI IDEOGRAM PILLOW;Lo;0;L;;;;;N;;;;;
