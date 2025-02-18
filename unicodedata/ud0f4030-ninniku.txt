@@ -1,7 +1,7 @@
 @flag --ninniku
 @substring c
 @file Blocks.txt
-F4030..F404F; Ninniku
+F4030..F405F; Ninniku
 @file UnicodeData.txt
 F4030;NINNIKU LETTER K;Lo;0;L;;;;;N;;;;;
 F4031;NINNIKU LETTER G;Lo;0;L;;;;;N;;;;;
