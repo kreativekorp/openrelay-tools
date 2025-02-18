@@ -1,4 +1,5 @@
 @flag --ucsur-number-forms-b
+@substring c
 @file Blocks.txt
 F40C0..F40EF; UCSUR Number Forms-B
 @file UnicodeData.txt
