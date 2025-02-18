@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from psname import psName, psNames, psUnicode
+from kbnpname import kbnpName
+from psname import psNames, psUnicode
 import re
 import sys
 
@@ -72,7 +73,7 @@ def readKbitxGlyphNames(filename):
 			m = re.search('<g ([un])="([^\"]+)"', line)
 			if m:
 				if m.group(1) == 'u':
-					currentName = psName(int(m.group(2)))
+					currentName = kbnpName(int(m.group(2)))
 					glyphNames.append(currentName)
 				if m.group(1) == 'n':
 					currentName = m.group(2)
