@@ -1,0 +1,5 @@
+@flag --elevator-master-one-hundred-thirteen
+@file Blocks.txt
+FF6E0..FF6FF; Elevatormasteronehundredthirteen
+@file UnicodeData.txt
+FF6E0;ELEVATORMASTERONEHUNDREDTHIRTEEN CAPITAL LETTER VERTICALLY REPEATING Y;Lu;0;L;;;;;N;;;;FF374;
