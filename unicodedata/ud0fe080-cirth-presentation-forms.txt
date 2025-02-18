@@ -1,4 +1,0 @@
-@flag --cirth-presentation-forms
-@substring p
-@file Blocks.txt
-FE080..FE0FF; Cirth Presentation Forms
