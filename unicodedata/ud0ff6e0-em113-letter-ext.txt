@@ -1,6 +1,6 @@
-@flag --elevator-master-one-hundred-thirteen
+@flag --em113-letter-ext
 @file Blocks.txt
-FF6E0..FF6FF; Elevatormasteronehundredthirteen
+FF6E0..FF6FF; Elevatormasteronehundredthirteen Letter Extensions
 @file UnicodeData.txt
 FF6E0;ELEVATORMASTERONEHUNDREDTHIRTEEN CAPITAL LETTER VERTICALLY REPEATING X;Lu;0;L;;;;;N;;;;FF6E1;
 FF6E1;ELEVATORMASTERONEHUNDREDTHIRTEEN SMALL LETTER VERTICALLY REPEATING X;Ll;0;L;;;;;N;;;FF6E0;;FF6E0
