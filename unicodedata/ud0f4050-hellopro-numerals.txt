@@ -1,7 +1,7 @@
-@flag --ucsur-number-forms-a
+@flag --hellopro-numerals
 @substring c
 @file Blocks.txt
-F4050..F407F; UCSUR Number Forms-A
+F4050..F407F; Hello Project Numerals
 @file UnicodeData.txt
 F4050;MORNING MUSUME DIGIT ZERO;Nd;0;EN;;0;0;0;N;;;;;
 F4051;MORNING MUSUME DIGIT ONE;Nd;0;EN;;1;1;1;N;;;;;
