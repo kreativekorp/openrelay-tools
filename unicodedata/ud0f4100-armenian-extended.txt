@@ -1,0 +1,8 @@
+@flag --armenian-extended
+@substring c
+@file Blocks.txt
+F4100..F412F; Armenian Extended
+@file UnicodeData.txt
+F4100;ARMENIAN CAPITAL LETTER TURNED AYB;Lu;0;L;;;;;N;;;;0560;
+F4127;ARMENIAN CAPITAL LETTER LIGATURE ECH YIWN;Lu;0;L;;;;;N;;;;0587;
+F4128;ARMENIAN CAPITAL LETTER YI WITH STROKE;Lu;0;L;;;;;N;;;;0588;
