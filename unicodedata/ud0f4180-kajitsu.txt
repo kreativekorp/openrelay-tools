@@ -1,4 +1,0 @@
-@flag --kajitsu
-@substring c
-@file Blocks.txt
-F4180..F41DF; Kajitsu
