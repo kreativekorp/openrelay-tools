@@ -1,0 +1,9 @@
+@flag --hello-project-logos
+@substring c
+@file Blocks.txt
+F4360..F437F; Hello Project Logos
+@file UnicodeData.txt
+F4360;MORNING MUSUME LOGO;So;0;ON;;;;;N;;;;;
+F4361;BERRYZ KOBO LOGO;So;0;ON;;;;;N;;;;;
+F4362;C-UTE LOGO;So;0;ON;;;;;N;;;;;
+F4363;S-MILEAGE LOGO;So;0;ON;;;;;N;;;;;
