@@ -1,5 +1,0 @@
-@flag --xxx
-@substring c
-@file Blocks.txt
-F41E0..F41FF; XXX
-@file UnicodeData.txt
