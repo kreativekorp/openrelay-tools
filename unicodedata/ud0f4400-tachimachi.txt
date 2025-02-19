@@ -1,4 +1,0 @@
-@flag --tachimachi
-@substring c
-@file Blocks.txt
-F4400..F47AF; Tachimachi
