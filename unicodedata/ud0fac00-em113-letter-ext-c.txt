@@ -1,0 +1,5 @@
+@flag --em113-letter-ext-b
+@file Blocks.txt
+FAC00..FAFFF; Elevatormasteronehundredthirteen Letter Extensions-B
+@file UnicodeData.txt
+FAC00;ELEVATORMASTERONEHUNDREDTHIRTEEN CAPITAL LETTER YOKOSO;Lu;0;L;;;;;N;;;;FF6F5;
