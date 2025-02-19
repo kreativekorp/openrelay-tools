@@ -1,4 +1,0 @@
-@flag --medefaidrin-presentation-forms
-@substring p
-@file Blocks.txt
-FEE00..FEEAF; Medefaidrin Presentation Forms

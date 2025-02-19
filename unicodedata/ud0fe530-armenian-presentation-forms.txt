@@ -1,4 +1,0 @@
-@flag --armenian-presentation-forms
-@substring p
-@file Blocks.txt
-FE530..FE58F; Armenian Presentation Forms

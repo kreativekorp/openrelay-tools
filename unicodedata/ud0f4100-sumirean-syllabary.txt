@@ -1,4 +1,0 @@
-@flag --sumirean-syllabary
-@substring c
-@file Blocks.txt
-F4100..F41FF; Sumirean Syllabary

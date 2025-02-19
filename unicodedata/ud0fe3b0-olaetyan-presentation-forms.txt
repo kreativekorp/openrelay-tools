@@ -1,0 +1,11 @@
+@flag --olaetyan-presentation-forms
+@substring p
+@file Blocks.txt
+FE3B0..FE3FF; Olaetyan Presentation Forms
+@file UnicodeData.txt
+FE3B0;OLAETYAN LIGATURE AE;Lo;0;;;;;;N;;;;;
+FE3B1;OLAETYAN LIGATURE NG;Lo;0;;;;;;N;;;;;
+FE3B2;OLAETYAN LIGATURE LHL;Lo;0;;;;;;N;;;;;
+FE3B3;OLAETYAN LIGATURE QU;Lo;0;;;;;;N;;;;;
+FE3B4;OLAETYAN LIGATURE SSE;Lo;0;;;;;;N;;;;;
+FE3B5;OLAETYAN LIGATURE KSS;Lo;0;;;;;;N;;;;;
