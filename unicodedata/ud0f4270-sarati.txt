@@ -1,4 +1,0 @@
-@flag --sarati
-@substring c
-@file Blocks.txt
-F4270..F429F; Sarati
