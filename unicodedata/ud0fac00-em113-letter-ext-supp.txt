@@ -1,6 +1,6 @@
-@flag --em113-letter-ext
+@flag --em113-letter-ext-supp
 @file Blocks.txt
-FAC00..FACFF; Elevatormasteronehundredthirteen Letter Extensions
+FAC00..FACFF; Elevatormasteronehundredthirteen Letter Extensions Supplement
 @file UnicodeData.txt
 FAC02;ELEVATORMASTERONEHUNDREDTHIRTEEN LETTER GAMBIR STATION;Lo;0;L;;;;;N;;;;;
 FAC03;ELEVATORMASTERONEHUNDREDTHIRTEEN LETTER KARAWANG STATION;Lo;0;L;;;;;N;;;;;
