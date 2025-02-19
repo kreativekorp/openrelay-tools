@@ -1,0 +1,4 @@
+@flag --jeruklegi
+@substring c
+@file Blocks.txt
+F4130..F415F; Jeruklegi
