@@ -1,0 +1,4 @@
+@flag --kobushi-syllabary
+@substring c
+@file Blocks.txt
+F4100..F41FF; Kobushi Syllabary
