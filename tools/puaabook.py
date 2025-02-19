@@ -66,8 +66,8 @@ class CmapEntry:
 		if format == 0:
 			self.entries = {}
 			for i in range(0, len(data)):
-				cp = ord(chr(i).decode('macroman'))
-				self.entries[cp] = ord(data[i])
+				cp = ord(struct.pack('>B', i).decode('macroman'))
+				self.entries[cp] = struct.unpack('>B', data[i:i+1])[0]
 		elif format == 4:
 			self.entries = []
 			countX2 = struct.unpack('>H', data[0:2])[0]
