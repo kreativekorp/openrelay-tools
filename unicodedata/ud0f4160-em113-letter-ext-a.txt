@@ -1,7 +1,7 @@
-@flag --em113-letter-ext
+@flag --em113-letter-ext-a
 @substring c
 @file Blocks.txt
-F4160..F417F; Elevatormasteronehundredthirteen Letter Extensions
+F4160..F417F; Elevatormasteronehundredthirteen Letter Extensions-A
 @file UnicodeData.txt
 F4160;ELEVATORMASTERONEHUNDREDTHIRTEEN CAPITAL LETTER KRAYU;Lu;0;L;;;;;N;;;;F4161;
 F4161;ELEVATORMASTERONEHUNDREDTHIRTEEN SMALL LETTER KRAYU;Ll;0;L;;;;;N;;;F4160;;F4160
