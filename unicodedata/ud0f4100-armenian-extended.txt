@@ -1,7 +1,7 @@
 @flag --armenian-extended
 @substring c
 @file Blocks.txt
-F4100..F415F; Armenian Extended
+F4100..F412F; Armenian Extended
 @file UnicodeData.txt
 F4100;ARMENIAN CAPITAL LETTER TURNED AYB;Lu;0;L;;;;;N;;;;0560;
 F410B;ARMENIAN CAPITAL LETTER IW;Lu;0;L;;;;;N;;;;F412A;
