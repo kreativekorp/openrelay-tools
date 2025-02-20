@@ -1,0 +1,9 @@
+@flag --armenian-extended
+@substring c
+@file Blocks.txt
+F26B0..F26FF; Armenian Extended
+@file UnicodeData.txt
+F26B0;ARMENIAN CAPITAL LETTER OW;Lu;0;L;;;;;N;;;;F26B1;
+F26B1;ARMENIAN SMALL LETTER OW;Ll;0;L;;;;;N;;;F26B0;;F26B0
+F26B2;ARMENIAN CAPITAL LETTER IW;Lu;0;L;;;;;N;;;;F26B3;
+F26B3;ARMENIAN SMALL LETTER IW;Ll;0;L;;;;;N;;;F26B2;;F26B2
