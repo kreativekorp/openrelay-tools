@@ -1,7 +1,7 @@
 @flag --cilacap
 @substring c
 @file Blocks.txt
-F4180..F41DF; Cilacap
+F4180..F41EF; Cilacap
 @ UnicodeData.txt
 F4180;CILACAP LETTER KA;Lo;0;L;;;;;N;;;;;
 F4181;CILACAP LETTER GA;Lo;0;L;;;;;N;;;;;
