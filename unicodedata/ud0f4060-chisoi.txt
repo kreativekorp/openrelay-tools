@@ -1,0 +1,4 @@
+@flag --chisoi
+@substring c
+@file Blocks.txt
+F4060..F408F; Chisoi
