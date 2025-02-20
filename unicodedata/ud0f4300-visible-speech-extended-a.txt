@@ -1,0 +1,6 @@
+@flag --visible-speech-extended-a
+@substring c
+@file Blocks.txt
+F4300..F435F; Visible Speech Extended-A
+@file UnicodeData.txt
+F4300;VISIBLE SPEECH MORNING MUSUME LETTERS;Lo;0;L;;;;;N;;;;;
