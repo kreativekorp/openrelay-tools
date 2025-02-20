@@ -1,0 +1,6 @@
+@flag --ihatemysalf-presentation-forms
+@substring p
+@file Blocks.txt
+FF6E0..FF6FF; Ihatemysalf Presentation Forms
+@file UnicodeData.txt
+FF6E3;IHATEMYSALF SMALL LETTER SATCHAY;Ll;0;L;;;;;N;;;FF375;;FF375
