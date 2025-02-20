@@ -1,7 +1,7 @@
 @flag --em113-letter-ext-a
 @substring c
 @file Blocks.txt
-F4160..F417F; Elevatormasteronehundredthirteen Letter Extensions-A
+F4130..F417F; Elevatormasteronehundredthirteen Letter Extensions-A
 @file UnicodeData.txt
 F417B;ELEVATORMASTERONEHUNDREDTHIRTEEN LETTER BLUE SCREEN OF DEATH;Lo;0;L;;;;;N;;;;;
 F417C;ELEVATORMASTERONEHUNDREDTHIRTEEN LETTER ROBLOX DISCONNECTED;Lo;0;L;;;;;N;;;;;
