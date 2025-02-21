@@ -1,7 +1,0 @@
-@flag --youkinese-supplement
-@substring c
-@file Blocks.txt
-F4150..F415F; Youkinese Supplement
-@file UnicodeData.txt
-F4150;YOUKINESE SMALL LETTER T;Ll;0;L;;;;;N;;;F4151;;F4151
-F4151;YOUKINESE CAPITAL LETTER T;Lu;0;L;;;;;N;;;;F4150;
