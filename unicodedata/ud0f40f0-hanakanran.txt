@@ -1,7 +1,7 @@
 @flag --hanakanran
 @substring c
 @file Blocks.txt
-F40F0..F410F; Hanakanran
+F40F0..F412F; Hanakanran
 @file UnicodeData.txt
 F40F0;HANAKANRAN LETTER MAS;Lo;0;L;;;;1;N;;;;;
 F40F1;HANAKANRAN LETTER SEN;Lo;0;L;;;;2;N;;;;;
