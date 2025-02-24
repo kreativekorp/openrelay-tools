@@ -1,0 +1,11 @@
+@flag --makasar-extended
+@substring c
+@file Blocks.txt
+F4180..F419F; Makasar Extended
+@file UnicodeData.txt
+F4180;MAKASAR LETTER NGKA;Lo;0;L;;;;;N;;;;;
+F4181;MAKASAR LETTER MPA;Lo;0;L;;;;;N;;;;;
+F4182;MAKASAR LETTER NRA;Lo;0;L;;;;;N;;;;;
+F4183;MAKASAR LETTER NYCA;Lo;0;L;;;;;N;;;;;
+F4184;MAKASAR LETTER HA;Lo;0;L;;;;;N;;;;;
+F4185;MAKASAR END OF TEXT;Po;0;L;;;;;N;;;;;
