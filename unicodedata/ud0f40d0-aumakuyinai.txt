@@ -1,4 +1,5 @@
 @flag --aumakuyinai
+@substring c
 @file Blocks.txt
 F40D0..F40EF; Aumakuyinai
 @file UnicodeData.txt
