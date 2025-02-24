@@ -1,4 +1,5 @@
 @flag --hello-project-numerals
+@substring c
 @file Blocks.txt
 F4050..F40CF; Hello Project Numerals
 @file UnicodeData.txt
