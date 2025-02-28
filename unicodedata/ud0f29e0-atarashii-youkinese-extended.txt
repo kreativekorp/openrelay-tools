@@ -1,0 +1,11 @@
+flag --atarashii-youkinese-extended
+@substring c
+@file Blocks.txt
+F29E0..F29FF; Atarashii Youkinese Extended
+@file UnicodeData.txt
+F29E0;ATARASHII YOUKINESE LETTER AA;Lo;0;L;;;;;N;;;;;
+F29E1;ATARASHII YOUKINESE LETTER II;Lo;0;L;;;;;N;;;;;
+F29E2;ATARASHII YOUKINESE LETTER UU;Lo;0;L;;;;;N;;;;;
+F29E3;ATARASHII YOUKINESE LETTER EE;Lo;0;L;;;;;N;;;;;
+F29E4;ATARASHII YOUKINESE LETTER OO;Lo;0;L;;;;;N;;;;;
+F29E5;ATARASHII YOUKINESE LETTER AU;Lo;0;L;;;;;N;;;;;
