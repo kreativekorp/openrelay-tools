@@ -1,0 +1,3 @@
+flag --halfwidth-and-fullwidth-forms-appendix-b
+@file Blocks.txt
+FFF50..FFF5F; Halfwidth and Fullwidth Forms Appendix-B
