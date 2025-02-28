@@ -1,4 +1,0 @@
-@flag --hakkirishiyouze
-@substring c
-@file Blocks.txt
-F2A00..F2A2F; Hakkirishiyouze

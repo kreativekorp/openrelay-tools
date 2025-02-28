@@ -1,0 +1,4 @@
+@flag --mizukifukumura
+@substring c
+@file Blocks.txt
+F29E0..F2A2F; Mizukifukumura
