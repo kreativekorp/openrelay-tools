@@ -1,7 +1,7 @@
 @flag --atarashii-youkinese
 @substring c
 @file Blocks.txt
-F2960..F29BF; Atarashii Youkinese
+F2960..F299F; Atarashii Youkinese
 @file UnicodeData.txt
 F2960;ATARASHII YOUKINESE LETTER S;Lo;0;L;;;;;N;;;;;
 F2961;ATARASHII YOUKINESE LETTER M;Lo;0;L;;;;;N;;;;;
