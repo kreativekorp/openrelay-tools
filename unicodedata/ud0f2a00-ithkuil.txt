@@ -1,4 +1,4 @@
 @flag --ithkuil
 @substring c
 @file Blocks.txt
-F26B0..F26FF; Ithkuil
+F2A00..F2A2F; Ithkuil
