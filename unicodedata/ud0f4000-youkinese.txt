@@ -1,6 +1,6 @@
 @flag --youkinese
 @file Blocks.txt
-F4000..F404F; Youkinese
+F4000..F405F; Youkinese
 @file UnicodeData.txt
 F4000;YOUKINESE DIGIT ZERO;Nd;0;L;;0;0;0;N;;;;;
 F4001;YOUKINESE DIGIT ONE;Nd;0;L;;1;1;1;N;;;;;
