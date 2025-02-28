@@ -1,4 +1,5 @@
 @flag --youkinese
+@substring c
 @file Blocks.txt
 F4000..F405F; Youkinese
 @file UnicodeData.txt
