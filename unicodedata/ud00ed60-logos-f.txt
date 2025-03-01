@@ -1,0 +1,6 @@
+@flag --logos-f
+@substring c
+@file Blocks.txt
+ED60..ED7F; Logos-F
+@file UnicodeData.txt
+ED7F;METRO TV LOGO;So;0;ON;;;;;N;;;;;
