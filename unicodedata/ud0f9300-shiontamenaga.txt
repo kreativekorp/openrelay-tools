@@ -1,3 +1,0 @@
-@flag --shiontamenaga
-@file Blocks.txt
-F9300..F935F; Shiontamenaga
