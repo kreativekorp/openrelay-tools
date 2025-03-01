@@ -1,0 +1,5 @@
+@flag --sitelen-pona-extended-b
+@substring c
+@substring tt
+@file Blocks.txt
+F1F00..F1FFF; Sitelen Pona Extended-B
