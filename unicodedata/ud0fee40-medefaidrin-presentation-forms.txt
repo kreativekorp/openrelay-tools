@@ -2,6 +2,3 @@
 @substring p
 @file Blocks.txt
 FEE40..FEE9F; Medefaidrin Presentation Forms
-@file UnicodeData.txt
-FEE40;MEDEFAIDRIN CAPITAL LETTER LIU;Lu;0;L;;;;;N;;;;FEE41;
-FEE41;MEDEFAIDRIN SMALL LETTER LIU;Ll;0;L;;;;;N;;;FEE40;;FEE40
