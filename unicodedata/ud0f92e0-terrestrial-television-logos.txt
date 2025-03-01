@@ -1,8 +1,0 @@
-@flag --terrestrial-television-logos
-@file Blocks.txt
-F92E0..F93CF; Terrestrial Television Logos
-@file UnicodeData.txt
-F92E0;METRO TV LOGO;So;0;ON;;;;;N;;;;;
-F92E1;NUSANTARA TV LOGO;So;0;ON;;;;;N;;;;;
-F92E2;BN CHANNEL LOGO;So;0;ON;;;;;N;;;;;
-F92E3;GARUDA TV LOGO;So;0;ON;;;;;N;;;;;
