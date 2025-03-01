@@ -1,0 +1,9 @@
+@flag --sitelen-pona-presentation-forms-e
+@substring ttt
+@file Blocks.txt
+F9360..F937F; Sitelen Pona Presentation Forms-E
+@file UnicodeData.txt
+F9360;SITELEN PONA IDEOGRAPH KASAPA;Lo;0;L;;;;;N;;;;;
+F937D;SITELEN PONA IDEOGRAPH MOMUSU;Lo;0;L;;;;;N;;;;;
+F937E;SITELEN PONA IDEOGRAPH JUTE;Lo;0;L;;;;;N;;;;;
+F937F;SITELEN PONA IDEOGRAPH ANJULUMU;Lo;0;L;;;;;N;;;;;
