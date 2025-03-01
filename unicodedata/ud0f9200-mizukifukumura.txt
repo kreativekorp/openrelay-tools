@@ -1,3 +1,0 @@
-@flag --mizukifukumura
-@file Blocks.txt
-F9200..F925F; Mizukifukumura
