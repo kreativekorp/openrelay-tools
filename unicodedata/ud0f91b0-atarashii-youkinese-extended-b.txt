@@ -1,0 +1,5 @@
+flag --atarashii-youkinese-extended-b
+@file Blocks.txt
+F91B0..F91FF; Atarashii Youkinese Extended-B
+@file UnicodeData.txt
+F91B0;ATARASHII YOUKINESE LETTER TJ;Lo;0;L;;;;;N;;;;;
