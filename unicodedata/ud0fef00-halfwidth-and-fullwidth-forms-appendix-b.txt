@@ -1,3 +1,8 @@
 flag --halfwidth-and-fullwidth-forms-appendix-b
 @file Blocks.txt
 FEF00..FEFFF; Halfwidth and Fullwidth Forms Appendix-B
+@file UnicodeData.txt
+FEF62;HALFWIDTH HIRAGANA LETTER WI;Lo;0;L;<narrow> 3090;;;;N;;;;;
+FEF63;HALFWIDTH HIRAGANA LETTER WE;Lo;0;L;<narrow> 3091;;;;N;;;;;
+FEF64;HALFWIDTH KATAKANA LETTER WI;Lo;0;L;<narrow> 30F0;;;;N;;;;;
+FEF65;HALFWIDTH KATAKANA LETTER WE;Lo;0;L;<narrow> 30F1;;;;N;;;;;
