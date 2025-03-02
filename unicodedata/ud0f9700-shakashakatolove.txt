@@ -1,0 +1,3 @@
+@flag --shakashakatolove
+@file Blocks.txt
+F9700..F97FF; Shakashakatolove
