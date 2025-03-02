@@ -1,3 +1,3 @@
 flag --halfwidth-and-fullwidth-forms-appendix-b
 @file Blocks.txt
-F6F00..F6FFF; Halfwidth and Fullwidth Forms Appendix-B
+F9800..F99FF; Halfwidth and Fullwidth Forms Appendix-B
