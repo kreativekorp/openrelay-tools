@@ -4,8 +4,14 @@ from __future__ import print_function
 from udparser import DataParser
 import sys
 
-if __name__ == '__main__':
+def main(args):
 	p = DataParser()
-	p.parseArgs(sys.argv[1:])
+	p.parseArgs(args)
 	p.processFiles()
-	p.printUnicodeData()
+	if p.actions:
+		p.processActions()
+	else:
+		p.printUnicodeData()
+
+if __name__ == '__main__':
+	main(sys.argv[1:])
