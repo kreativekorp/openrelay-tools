@@ -1,4 +1,7 @@
+@flag --sylabitsa-2013
 @flag --sylabica-2013
+@flag --sylabica
+@substring c
 @file Blocks.txt
 E650..E67F; Sylabica
 @file UnicodeData.txt

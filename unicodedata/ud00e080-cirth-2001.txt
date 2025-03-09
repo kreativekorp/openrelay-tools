@@ -1,4 +1,6 @@
 @flag --cirth-2001
+@flag --cirth
+@substring c
 @file Blocks.txt
 E080..E0FF; Cirth
 @file UnicodeData.txt

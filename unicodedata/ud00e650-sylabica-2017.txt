@@ -1,4 +1,6 @@
+@flag --sylabitsa-2017
 @flag --sylabica-2017
+@flag --sylabitsa
 @file Blocks.txt
 E650..E67F; Sylabitsa
 @file UnicodeData.txt

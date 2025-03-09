@@ -1,4 +1,6 @@
 @flag --tengwar-2001
+@flag --tengwar
+@substring c
 @file Blocks.txt
 E000..E07F; Tengwar
 @file UnicodeData.txt
