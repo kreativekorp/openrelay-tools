@@ -1,4 +1,4 @@
 @flag --ochanormese
 @substring c
 @file Blocks.txt
-F2A30..F367F; Ochanormese
+F2A30..F33FF; Ochanormese
