@@ -1,4 +1,0 @@
-@flag --angermese
-@substring c
-@file Blocks.txt
-F2A30..F367F; Angermese
