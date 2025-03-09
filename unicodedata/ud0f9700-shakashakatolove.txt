@@ -1,3 +1,0 @@
-@flag --shakashakatolove
-@file Blocks.txt
-F9700..F989F; Shakashakatolove
