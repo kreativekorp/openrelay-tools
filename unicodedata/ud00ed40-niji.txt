@@ -1,7 +1,7 @@
 @flag --niji
 @substring c
 @file Blocks.txt
-ED40..ED7F; Niji
+ED40..ED5F; Niji
 @file UnicodeData.txt
 ED40;NIJI VOWEL A;Lo;0;L;;;;;N;;;;;
 ED41;NIJI VOWEL I;Lo;0;L;;;;;N;;;;;
