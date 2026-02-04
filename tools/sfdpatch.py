@@ -98,6 +98,17 @@ def dicttime(now=datetime.now()):
 		'Z': now.strftime('%Z'),
 	}
 
+def parseSubsetRemap(f):
+	print(('Patching %s...' % f), file=sys.stderr)
+	with open(f, 'r') as lines:
+		for line in lines:
+			line = line.split('#')[0].strip()
+			if line:
+				line = re.split(r'\s+', line)
+				f0 = line[0] if len(line) > 0 else None
+				f1 = line[1] if len(line) > 1 else None
+				yield f0, f1
+
 class SfdChar:
 	def __init__(self, name):
 		self.name = name
@@ -282,10 +293,21 @@ class Sfd:
 
 	def removeChar(self, name):
 		names = name.split(' ')
+		regexes = []
+		for i in range(len(names)-1,-1,-1):
+			if names[i][0] == '/' and names[i][-1] == '/':
+				regexes.append(re.compile(names[i][1:-1]))
+				names.pop(i)
 		for i in range(len(self.chars)-1,-1,-1):
 			if self.chars[i].name in names:
 				self.charindex.pop(self.chars[i].name)
 				self.chars.pop(i)
+				continue
+			for regex in regexes:
+				if regex.match(self.chars[i].name):
+					self.charindex.pop(self.chars[i].name)
+					self.chars.pop(i)
+					break
 		self.renumber()
 
 	def sortByCodePoint(self):
@@ -358,6 +380,63 @@ class Sfd:
 					self.charindex[baseName + formName] = i
 					self.chars[i].name = baseName + formName
 
+	def sitelenPonaCartouche(self, name):
+		names = name.split(' ')
+		regexes = []
+		for i in range(len(names)-1,-1,-1):
+			if names[i][0] == '/' and names[i][-1] == '/':
+				regexes.append(re.compile(names[i][1:-1]))
+				names.pop(i)
+		ecarts = {}
+		eexts = {}
+		for i in range(len(self.chars)):
+			m = re.match('^z([0-9]+)[.](ecart|eext)$', self.chars[i].name)
+			if m:
+				if m.group(2) == 'ecart':
+					ecarts[int(m.group(1))] = i
+				if m.group(2) == 'eext':
+					eexts[int(m.group(1))] = i
+		nextenc = [0x200000, -1, len(self.chars)]
+		def createCartouche(ch):
+			encline = ch.get('Encoding').split(' ')
+			wline = ch.get('Width').split(' ')
+			width = int(wline[-1])
+			cw = min(zw for zw in ecarts.keys() if zw >= width)
+			if cw is not None:
+				ci = self.charIndex(ch.name + '.cartouche', True)
+				if not self.chars[ci].properties:
+					self.chars[ci].append('Encoding: %d %d %d' % tuple(nextenc))
+					self.chars[ci].append(ch.get('Width'))
+					self.chars[ci].append('Flags: HW')
+					self.chars[ci].append(ch.get('LayerCount'))
+					self.chars[ci].append('Fore')
+					self.chars[ci].append('Refer: %s %s N 1 0 0 1 0 0 1' % (encline[-1], encline[-2]))
+					self.chars[ci].append('Refer: %d %d N 1 0 0 1 0 0 2' % (ecarts[cw], -1))
+					nextenc[0] += 1
+					nextenc[2] += 1
+			ew = min(zw for zw in eexts.keys() if zw >= width)
+			if ew is not None:
+				ei = self.charIndex(ch.name + '.extension', True)
+				if not self.chars[ei].properties:
+					self.chars[ei].append('Encoding: %d %d %d' % tuple(nextenc))
+					self.chars[ei].append(ch.get('Width'))
+					self.chars[ei].append('Flags: HW')
+					self.chars[ei].append(ch.get('LayerCount'))
+					self.chars[ei].append('Fore')
+					self.chars[ei].append('Refer: %s %s N 1 0 0 1 0 0 1' % (encline[-1], encline[-2]))
+					self.chars[ei].append('Refer: %d %d N 1 0 0 1 0 0 2' % (eexts[ew], -1))
+					nextenc[0] += 1
+					nextenc[2] += 1
+		for i in range(len(self.chars)):
+			if self.chars[i].name in names:
+				createCartouche(self.chars[i])
+				continue
+			for regex in regexes:
+				if regex.match(self.chars[i].name):
+					createCartouche(self.chars[i])
+					break
+		self.renumber()
+
 	def print(self):
 		print('SplineFontDB: ' + self.version)
 		for prop in self.properties:
@@ -390,6 +469,14 @@ class Sfd:
 					self.version = line[14:]
 				elif line.startswith('---StartChar: '):
 					self.removeChar(line[14:])
+				elif line.startswith('@@@RemoveChar '):
+					self.removeChar(line[14:])
+				elif line.startswith('@@@SubsetRemap '):
+					self.subsetRemap(parseSubsetRemap(line[15:]))
+				elif line.startswith('@@@SitelenPonaCartouche '):
+					self.sitelenPonaCartouche(line[24:])
+				elif line == '@@@SitelenPonaRename':
+					self.sitelenPonaRename()
 				elif line == '@@@StrictMonospace':
 					self.strictMonospace()
 				elif line == '@@@SortByCodePoint':
@@ -440,24 +527,15 @@ class Sfd:
 				else:
 					self.chars[ci].append(line)
 
+	def parseFile(self, f):
+		print(('Patching %s...' % f), file=sys.stderr)
+		with open(f, 'r') as lines:
+			self.parse(lines)
+
 def main():
 	sfd = Sfd()
 	parseOpts = True
 	argType = 'file'
-	def parseFile(f):
-		print(('Patching %s...' % f), file=sys.stderr)
-		with open(f, 'r') as lines:
-			sfd.parse(lines)
-	def parseSubsetRemap(f):
-		print(('Patching %s...' % f), file=sys.stderr)
-		with open(f, 'r') as lines:
-			for line in lines:
-				line = line.split('#')[0].strip()
-				if line:
-					line = re.split(r'\s+', line)
-					f0 = line[0] if len(line) > 0 else None
-					f1 = line[1] if len(line) > 1 else None
-					yield f0, f1
 	for arg in sys.argv[1:]:
 		if parseOpts and arg.startswith('-'):
 			if arg == '--':
@@ -470,13 +548,15 @@ def main():
 				argType = 'removeChar'
 			elif arg == '-sr' or arg == '--subsetRemap':
 				argType = 'subsetRemap'
+			elif arg == '-spc' or arg == '--sitelenPonaCartouche':
+				argType = 'sitelenPonaCartouche'
 			elif arg == '-n' or arg == '--renumber':
 				sfd.renumber()
 			elif arg == '-s' or arg == '--sortByCodePoint':
 				sfd.sortByCodePoint()
 			elif arg == '-m' or arg == '--strictMonospace':
 				sfd.strictMonospace()
-			elif arg == '-sp' or arg == '--sitelenPonaRename':
+			elif arg == '-spr' or arg == '--sitelenPonaRename':
 				sfd.sitelenPonaRename()
 			elif arg == '--marks':
 				for ch in sfd.chars:
@@ -493,9 +573,9 @@ def main():
 						print(ch.name)
 				sys.exit()
 			elif arg.startswith('-f='):
-				parseFile(arg[3:])
+				sfd.parseFile(arg[3:])
 			elif arg.startswith("--file="):
-				parseFile(arg[7:])
+				sfd.parseFile(arg[7:])
 			elif arg.startswith('-c='):
 				sfd.parse(arg[3:].split(';'))
 			elif arg.startswith('--command='):
@@ -508,8 +588,14 @@ def main():
 				sfd.subsetRemap(parseSubsetRemap(arg[4:]))
 			elif arg.startswith('--subsetRemap='):
 				sfd.subsetRemap(parseSubsetRemap(arg[14:]))
+			elif arg.startswith('-spc='):
+				sfd.sitelenPonaCartouche(arg[5:])
+			elif arg.startswith('--sitelenPonaCartouche='):
+				sfd.sitelenPonaCartouche(arg[23:])
 			else:
 				print(('Unknown option: %s' % arg), file=sys.stderr)
+		elif argType == 'sitelenPonaCartouche':
+			sfd.sitelenPonaCartouche(arg)
 		elif argType == 'subsetRemap':
 			sfd.subsetRemap(parseSubsetRemap(arg))
 		elif argType == 'removeChar':
@@ -517,7 +603,7 @@ def main():
 		elif argType == 'command':
 			sfd.parse(arg.split(';'))
 		else:
-			parseFile(arg)
+			sfd.parseFile(arg)
 	sfd.print()
 
 if __name__ == '__main__':
