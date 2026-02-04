@@ -236,7 +236,7 @@ class GlyphCollection:
 				self.mapAsciiSequence(fields[0], name[1:-1], comment)
 			else:
 				joinerSequence = tuple(re.split(JOINER_RE, name))
-				if len(joinerSequence) > 1:
+				if len(joinerSequence) > 1 and all(joinerSequence):
 					self.mapJoinerSequence(fields[0], joinerSequence, comment)
 				else:
 					self.mapAsciiSequence(fields[0], name, comment)
@@ -253,17 +253,23 @@ class GlyphCollection:
 		self.addAutocartoucheRule(False, 'U+F1C7E-F1C7F')  # titi pula format control characters
 		self.addAutocartoucheRule(False, '^.+[.](cartouche|extension|kijext|kijend|ccart|cext|ecart|eext)$')
 
-	def writeAsciiSequences(self, path, spaces=None, joiners=True, webkitFix=None):
+	def writeAsciiSequences(self, path, spaces=None, joiners=None, webkitFix=None):
 		# Check parameters
+		zeroWidthSpace = (self.widths['space'] == 0)
+		allJoinersAscii = all(x in self.asciiSequences and self.asciiSequences[x].name == JOINERS[x] for x in JOINERS.keys())
 		if spaces is None:
-			spaces = (self.widths['space'] != 0)
-		if (self.widths['space'] != 0) and not spaces:
+			spaces = not zeroWidthSpace
+		if not spaces and not zeroWidthSpace:
 			print('WARNING: Subs with spaces not being added to font with non-zero-width space', file=sys.stderr)
+		if joiners is None:
+			joiners = not allJoinersAscii
+		if not joiners and not allJoinersAscii:
+			print('WARNING: Subs with joiners not being added to font without ASCII joiners', file=sys.stderr)
 		if webkitFix is None:
-			webkitFix = (self.widths['space'] == 0)
-		if webkitFix and not (self.widths['space'] == 0):
+			webkitFix = zeroWidthSpace
+		if webkitFix and not zeroWidthSpace:
 			print('WARNING: WebKit fix being applied to font with non-zero-width space', file=sys.stderr)
-		if (self.widths['space'] == 0) and not webkitFix:
+		if not webkitFix and zeroWidthSpace:
 			print('WARNING: WebKit fix not being applied to font with zero-width space', file=sys.stderr)
 		# Gather all sequences grouped by length
 		sequences = {}
@@ -703,7 +709,7 @@ def main(args):
 	outputFile = 'sitelenpona.fea'
 	# Options for ASCII sequences
 	spaces = None
-	joiners = True
+	joiners = None
 	webkitFix = None
 	rsubDepth = 16
 	# Parse arguments
