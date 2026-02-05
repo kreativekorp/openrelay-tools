@@ -200,8 +200,8 @@ class GlyphCollection:
 			scaledGlyph = self.joinerSequences[scaledSequence] if scaledSequence in self.joinerSequences else None
 			stackedGlyph = self.joinerSequences[stackedSequence] if stackedSequence in self.joinerSequences else None
 			self.mapJoinerSequenceFallback(zwjSequence, zwjGlyph, scaledGlyph, stackedGlyph)
-			self.mapJoinerSequenceFallback(scaledSequence, scaledGlyph, stackedGlyph, zwjGlyph)
-			self.mapJoinerSequenceFallback(stackedSequence, stackedGlyph, scaledGlyph, zwjGlyph)
+			self.mapJoinerSequenceFallback(scaledSequence, scaledGlyph, stackedGlyph)
+			self.mapJoinerSequenceFallback(stackedSequence, stackedGlyph, scaledGlyph)
 
 	def mapExtendedVariant(self, variant, name, baseName, comment):
 		self.addDictionaryEntry(self.extendedVariants[variant], name, baseName, comment)
@@ -288,27 +288,24 @@ class GlyphCollection:
 		# Write features to file
 		with open(path, 'w') as f:
 			f.write('feature liga {\n\n')
-			if sequences:
-				f.write('  lookup spAsciiSequences {\n\n')
-				for l in sorted(sequences.keys(), reverse=True):
-					if spaces:
-						f.write('    # Sequences of length %d (%d + space)\n' % (l + 1, l))
-						for s in sorted(sequences[l].keys()):
-							f.write('    sub %s space by %s;\n' % (' '.join(s), sequences[l][s].name))
-						f.write('\n')
-					f.write('    # Sequences of length %d\n' % l)
+			for l in sorted(sequences.keys(), reverse=True):
+				if spaces:
+					f.write('  # Sequences of length %d (%d + space)\n' % (l + 1, l))
 					for s in sorted(sequences[l].keys()):
-						f.write('    sub %s by %s;\n' % (' '.join(s), sequences[l][s].name))
+						f.write('  sub %s space by %s;\n' % (' '.join(s), sequences[l][s].name))
 					f.write('\n')
-				f.write('  } spAsciiSequences;\n\n')
+				f.write('  # Sequences of length %d\n' % l)
+				for s in sorted(sequences[l].keys()):
+					f.write('  sub %s by %s;\n' % (' '.join(s), sequences[l][s].name))
+				f.write('\n')
 			if webkitFix:
-				f.write('  lookup spWebKitFix {\n\n')
-				f.write('    sub [uni00A0 space] space\' by uni00A0;\n')
+				f.write('  # WebKit fixes\n')
+				f.write('  sub [uni00A0 space] space\' by uni00A0;\n')
 				if 'uF1997' in self.widths:
-					f.write('    sub space uF1997 by uF1997;\n')
+					f.write('  sub space uF1997 by uF1997;\n')
 				if 'uF199B' in self.widths:
-					f.write('    sub uF199B space by uF199B;\n\n')
-				f.write('  } spWebKitFix;\n\n')
+					f.write('  sub uF199B space by uF199B;\n')
+				f.write('\n')
 			f.write('} liga;\n\n')
 
 	def getJoinerGlyphClass(self, name):
@@ -338,47 +335,56 @@ class GlyphCollection:
 			maxTallySequence += ','
 		# Write features to file
 		f.write('feature rlig {\n\n')
-		if sequences:
-			f.write('  lookup spJoinerSequences {\n\n')
-			for l in sorted(sequences.keys(), reverse=True):
-				f.write('    # Sequences of length %d\n' % l)
-				for s in sorted(sequences[l].keys()):
-					f.write('    sub %s by %s;%s\n' % (' '.join(s), sequences[l][s].name, sequences[l][s].outputComment()))
-				f.write('\n')
-			f.write('  } spJoinerSequences;\n\n')
+		for l in sorted(sequences.keys(), reverse=True):
+			f.write('  # Sequences of length %d\n' % l)
+			for s in sorted(sequences[l].keys()):
+				f.write('  sub %s by %s;%s\n' % (' '.join(s), sequences[l][s].name, sequences[l][s].outputComment()))
+			f.write('\n')
 		if maxTally > 1:
-			f.write('  lookup spTallyMarks {\n\n')
 			gc = self.asciiSequences[','].outputClass()
+			f.write('  # Tally marks\n')
 			for n in range(maxTally, 1, -1):
 				g = self.asciiSequences[maxTallySequence[0:n]]
-				f.write('    sub %s by %s;%s\n' % (' '.join([gc] * n), g.name, g.outputComment()))
+				f.write('  sub %s by %s;%s\n' % (' '.join([gc] * n), g.name, g.outputComment()))
 			f.write('\n')
-			f.write('  } spTallyMarks;\n\n')
 		f.write('} rlig;\n\n')
+
+	def generatePairs(self, g1, g2):
+		g1comment = g1.outputComment()
+		g2comment = g2.outputComment()
+		for name in g1.names:
+			yield (name + g1comment, g2.name + g2comment)
 
 	def getForwardExtendablePairs(self):
 		for k in self.extendedVariants[FORWARD].keys():
-			yield (self.asciiSequences[k], self.extendedVariants[FORWARD][k])
+			for pair in self.generatePairs(self.asciiSequences[k], self.extendedVariants[FORWARD][k]):
+				yield pair
 		for k in self.extendedVariants[BIDIRECTIONAL].keys():
 			if k in self.extendedVariants[REVERSE]:
-				yield (self.extendedVariants[REVERSE][k], self.extendedVariants[BIDIRECTIONAL][k])
+				for pair in self.generatePairs(self.extendedVariants[REVERSE][k], self.extendedVariants[BIDIRECTIONAL][k]):
+					yield pair
 		for k in self.extendedVariants[KIJETESANTAKALU_BIDIRECTIONAL].keys():
 			if k in self.extendedVariants[KIJETESANTAKALU_REVERSE]:
-				yield (self.extendedVariants[KIJETESANTAKALU_REVERSE][k], self.extendedVariants[KIJETESANTAKALU_BIDIRECTIONAL][k])
+				for pair in self.generatePairs(self.extendedVariants[KIJETESANTAKALU_REVERSE][k], self.extendedVariants[KIJETESANTAKALU_BIDIRECTIONAL][k]):
+					yield pair
 
 	def getReverseExtendablePairs(self):
 		for k in self.extendedVariants[REVERSE].keys():
-			yield (self.asciiSequences[k], self.extendedVariants[REVERSE][k])
+			for pair in self.generatePairs(self.asciiSequences[k], self.extendedVariants[REVERSE][k]):
+				yield pair
 		for k in self.extendedVariants[BIDIRECTIONAL].keys():
 			if k in self.extendedVariants[FORWARD]:
-				yield (self.extendedVariants[FORWARD][k], self.extendedVariants[BIDIRECTIONAL][k])
+				for pair in self.generatePairs(self.extendedVariants[FORWARD][k], self.extendedVariants[BIDIRECTIONAL][k]):
+					yield pair
 
 	def getKijetesantakaluExtendablePairs(self):
 		for k in self.extendedVariants[KIJETESANTAKALU_REVERSE].keys():
-			yield (self.asciiSequences[k], self.extendedVariants[KIJETESANTAKALU_REVERSE][k])
+			for pair in self.generatePairs(self.asciiSequences[k], self.extendedVariants[KIJETESANTAKALU_REVERSE][k]):
+				yield pair
 		for k in self.extendedVariants[KIJETESANTAKALU_BIDIRECTIONAL].keys():
 			if k in self.extendedVariants[FORWARD]:
-				yield (self.extendedVariants[FORWARD][k], self.extendedVariants[KIJETESANTAKALU_BIDIRECTIONAL][k])
+				for pair in self.generatePairs(self.extendedVariants[FORWARD][k], self.extendedVariants[KIJETESANTAKALU_BIDIRECTIONAL][k]):
+					yield pair
 
 	def getKijetesantakaluExtensionTriples(self):
 		for gn in self.widths.keys():
@@ -401,9 +407,9 @@ class GlyphCollection:
 		extlessGN = [gn.rsplit('.', 1)[0] for gn in extGN]
 		cartZW = sorted(int(gn[1:-6]) for gn in self.widths.keys() if re.match(r'^z[0-9]+[.]ccart$', gn) and '%s.ecart' % gn[0:-6] in self.widths)
 		extZW = sorted(int(gn[1:-5]) for gn in self.widths.keys() if re.match(r'^z[0-9]+[.]cext$', gn) and '%s.eext' % gn[0:-5] in self.widths)
-		fxPairs = sorted((a.outputClass() + a.outputComment(), b.name + b.outputComment()) for a, b in self.getForwardExtendablePairs())
-		rxPairs = sorted((a.outputClass() + a.outputComment(), b.name + b.outputComment()) for a, b in self.getReverseExtendablePairs())
-		kxPairs = sorted((a.outputClass() + a.outputComment(), b.name + b.outputComment()) for a, b in self.getKijetesantakaluExtendablePairs())
+		fxPairs = sorted(set(self.getForwardExtendablePairs()))
+		rxPairs = sorted(set(self.getReverseExtendablePairs()))
+		kxPairs = sorted(set(self.getKijetesantakaluExtendablePairs()))
 		kxTriples = sorted(self.getKijetesantakaluExtensionTriples())
 		extendedGN = set(self.getExtendedGlyphNames())
 		cartableGN = [gn for gn in self.widths.keys() if self.autocartouche.match(gn) and gn not in extendedGN]
@@ -597,11 +603,18 @@ class GlyphCollection:
 					f.write('  } spExtensionBackward;\n\n')
 		f.write('} calt;\n\n')
 
+	def getVariantGlyphNames(self, name):
+		if name.startswith('\\'):
+			if name[1:] in self.glyphsByName:
+				return self.glyphsByName[name[1:]].names
+			return GlyphInfo(name[1:], self.widths[name[1:]]).names
+		return self.asciiSequences[name].names
+
 	def writeVariantFeatures(self, f):
 		# Collect all glyph variants for use in joiner sequences
 		collections = {}
 		def collect(bn, vn):
-			if self.glyphsByName[bn].asciiSequences:
+			if bn in self.glyphsByName and self.glyphsByName[bn].asciiSequences:
 				cn = self.glyphsByName[bn].asciiSequences[0]
 				if cn not in collections:
 					collections[cn] = [bn]
@@ -626,7 +639,7 @@ class GlyphCollection:
 			if feature in self.featureVariants and self.featureVariants[feature]:
 				stylisticSets[feature] = {}
 				for k in self.featureVariants[feature].keys():
-					for name in (self.glyphsByName[k[1:]] if k.startswith('\\') else self.asciiSequences[k]).names:
+					for name in self.getVariantGlyphNames(k):
 						stylisticSets[feature][name] = self.featureVariants[feature][k]
 						collect(name, self.featureVariants[feature][k])
 		# Gather character variants
@@ -682,8 +695,9 @@ class GlyphCollection:
 					f.write('      name 3 1 1033 "%s";\n' % subfeatureName)
 					f.write('      name 1 0 0 "%s";\n' % subfeatureName)
 					f.write('    };\n')
-			for c in characters:
-				f.write('    Character %s;\n' % c)
+			for cp in [psUnicode(c) for c in characters]:
+				if cp >= 0:
+					f.write('    Character 0x%04X;\n' % cp)
 			f.write('  };\n')
 			for c in characters:
 				replacements = [(characterVariants[feature][x][c] if c in characterVariants[feature][x] else c) for x in subfeatures]
