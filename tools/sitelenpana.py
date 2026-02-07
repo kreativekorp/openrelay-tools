@@ -3,27 +3,45 @@
 from __future__ import print_function
 from kbnpname import kbnpName
 from psname import psNames, psUnicode
+from matplotlib import font_manager
+from PIL import ImageFont
+import linku
+import os
 import re
 import sys
 
-# --- Reading glyph names and widths from font source files --------------------
+# --- Reading metrics and glyph names from font source files -------------------
 
-def readSFDGlyphWidths(path):
+def readSFDMetrics(path):
+	ascent = 800
+	descent = 200
 	widths = {}
 	with open(path, 'r') as f:
 		name = None
 		for line in f:
+			if line.startswith('Ascent: '):
+				ascent = int(line.strip().split(' ', 1)[1])
+			if line.startswith('Descent: '):
+				descent = int(line.strip().split(' ', 1)[1])
 			if line.startswith('StartChar: '):
 				name = line.strip().split(' ', 1)[1]
 			if line.startswith('Width: '):
 				widths[name] = int(line.strip().split(' ', 1)[1])
-	return widths
+	return (ascent, descent, widths)
 
-def readKbitxGlyphWidths(path):
+def readKbitxMetrics(path):
+	ascent = 800
+	descent = 200
 	widths = {}
 	with open(path, 'r') as f:
 		name = None
 		for line in f:
+			m = re.search('<prop id="emAscent" value="([0-9]+)"', line)
+			if m:
+				ascent = int(m.group(1)) * 100
+			m = re.search('<prop id="emDescent" value="([0-9]+)"', line)
+			if m:
+				descent = int(m.group(1)) * 100
 			m = re.search('<g ([un])="([^\"]+)"', line)
 			if m:
 				if m.group(1) == 'u':
@@ -33,14 +51,24 @@ def readKbitxGlyphWidths(path):
 				m = re.search(' w="([0-9]+)"', line)
 				if m:
 					widths[name] = int(m.group(1)) * 100
-	return widths
+	return (ascent, descent, widths)
 
-def readGlyphWidths(path):
+def readFontMetrics(path):
 	if path.endswith('.sfd'):
-		return readSFDGlyphWidths(path)
+		return readSFDMetrics(path)
 	if path.endswith('.kbitx'):
-		return readKbitxGlyphWidths(path)
+		return readKbitxMetrics(path)
 	raise ValueError(path)
+
+# --- Other small utility functions --------------------------------------------
+
+def htmlEscape(s):
+	return s.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;').replace('"','&#34;').replace("'",'&#39;')
+
+def getSansSerifFont(size):
+	prop = font_manager.FontProperties()
+	path = font_manager.findfont(prop)
+	return ImageFont.truetype(path, size)
 
 # --- Rules for matching a set of glyphs by name or code point -----------------
 
@@ -119,6 +147,7 @@ JOINER_RE = '([&+-])'
 
 # Other stuff
 TASUN_GLYPHS = ['tasun1', 'tasun2', 'tasun3', 'taa', 'a', 'aasun']
+USAGE_CATEGORIES = ['core', 'common', 'uncommon', 'obscure', 'sandbox', 'none', 'name', 'compound', 'dupe']
 
 class GlyphInfo:
 	def __init__(self, name, width):
@@ -127,6 +156,7 @@ class GlyphInfo:
 		self.width = width
 		self.comments = []
 		self.asciiSequences = []
+		self.joinerSequences = []
 
 	def outputClass(self):
 		return ('[%s]' % ' '.join(self.names)) if len(self.names) > 1 else self.name
@@ -136,8 +166,10 @@ class GlyphInfo:
 
 class GlyphCollection:
 	def __init__(self, path):
-		self.widths = readGlyphWidths(path)
+		self.fontFile = path
+		self.ascent, self.descent, self.widths = readFontMetrics(path)
 		self.autocartouche = GlyphRuleSet(False)
+		self.usageCategories = {}
 		self.featureNames = {}
 		self.featureVariants = {}
 		self.glyphsByName = {}
@@ -153,6 +185,9 @@ class GlyphCollection:
 
 	def addAutocartoucheRule(self, allow, rule):
 		self.autocartouche.addRule(allow, rule)
+
+	def mapUsageCategory(self, category, word):
+		self.usageCategories[word] = category
 
 	def mapFeatureName(self, feature, name):
 		self.featureNames[feature] = name
@@ -182,7 +217,9 @@ class GlyphCollection:
 			g.asciiSequences.append(sequence)
 
 	def mapJoinerSequence(self, name, sequence, comment):
-		self.addDictionaryEntry(self.joinerSequences, name, sequence, comment)
+		g = self.addDictionaryEntry(self.joinerSequences, name, sequence, comment)
+		if sequence not in g.joinerSequences:
+			g.joinerSequences.append(sequence)
 
 	def mapJoinerSequenceFallback(self, sequence, glyph, *fallbacks):
 		if glyph is None:
@@ -213,6 +250,10 @@ class GlyphCollection:
 		if fields[0] == '@allow' or fields[0] == '@deny':
 			for rule in fields[1:]:
 				self.addAutocartoucheRule(fields[0] == '@allow', rule)
+			return
+		if fields[0][:1] == '@' and fields[0][1:] in USAGE_CATEGORIES:
+			for word in fields[1:]:
+				self.mapUsageCategory(fields[0][1:], word)
 			return
 		m = re.match('^@(ss[0-9][0-9]|cv[0-9][0-9]([.][0-9]+)?)$', fields[0])
 		if m:
@@ -713,6 +754,116 @@ class GlyphCollection:
 			self.writeJoinerSequences(f)
 			self.writeExtensionFeatures(f, rsubDepth)
 
+	def writeGlyphListHtmlFile(self, path, eotFile=None, ttfFile=None):
+		# Build map of usage categories
+		words = linku.getWords()
+		sandbox = linku.getSandbox()
+		categories = {k: sandbox[k]['usage_category'] for k in sandbox.keys()}
+		categories.update({k: words[k]['usage_category'] for k in words.keys()})
+		categories.update(self.usageCategories)
+		def getCategory(word, dflt):
+			if word in categories:
+				return categories[word]
+			m = re.match('^([A-Za-z]+)([0-9]+)$', word)
+			if m and m.group(1) in categories:
+				return categories[m.group(1)]
+			return dflt if word == word.lower() else 'name'
+		# Gather all mappings of ASCII sequences to glyphs
+		pairs = {}
+		for g in self.asciiSequences.values():
+			localPairs = {}
+			for asciiSequence in g.asciiSequences:
+				m = re.match('^([A-Za-z]+)([0-9]*)$', asciiSequence)
+				if m and (m.group(1) not in localPairs or m.group(2) < localPairs[m.group(1)]):
+					localPairs[m.group(1)] = m.group(2)
+				if not m and re.search('[A-Za-z]', asciiSequence):
+					localPairs[asciiSequence] = ''
+			for k in localPairs.keys():
+				pairs[k + localPairs[k]] = g.name
+		pairsByCategory = {}
+		for k in pairs.keys():
+			category = getCategory(k, 'none')
+			if category not in pairsByCategory:
+				pairsByCategory[category] = []
+			pair = (k, pairs[k])
+			if pair not in pairsByCategory[category]:
+				pairsByCategory[category].append(pair)
+		for g in self.joinerSequences.values():
+			word = ''.join(g.joinerSequences[0])
+			if '@' not in word and '\\' not in word:
+				category = getCategory(word, 'compound')
+				if category not in pairsByCategory:
+					pairsByCategory[category] = []
+				pair = (word, g.name)
+				if pair not in pairsByCategory[category]:
+					pairsByCategory[category].append(pair)
+		def writeCategory(f, font, category, title):
+			if category in pairsByCategory:
+				f.write('<h3 id="%s">%s</h3>\n\n' % (category, htmlEscape(title)))
+				f.write('<div class="glyphs"><!--\n')
+				for asciiSequence, name in sorted(pairsByCategory[category], key=lambda p: re.sub(JOINER_RE, '-', p[0].lower())):
+					f.write('--><div class="gs %s"><div class="gsg">' % category)
+					# ---
+					cp = psUnicode(name)
+					scale = 112 / (48 * self.widths[name] / (self.ascent + self.descent))
+					if scale < 1:
+						f.write('<div style="transform: translateX(-25%%) scaleX(%.2f); width: 200%%;">&#x%04X;</div>' % (scale, cp))
+					else:
+						f.write('&#x%04X;' % cp)
+					# ---
+					f.write('</div><div class="gsn">')
+					# ---
+					scale = 112 / font.getmask(asciiSequence).getbbox()[2]
+					if scale < 1:
+						f.write('<div style="transform: translateX(-25%%) scaleX(%.2f); width: 200%%;">%s</div>' % (scale, htmlEscape(asciiSequence)))
+					else:
+						f.write(htmlEscape(asciiSequence))
+					# ---
+					pubpri = (
+						'pub' if (0xF1900 <= cp <= 0xF19FF or 0xF1C40 <= cp <= 0xF1C9F)
+						else 'pri' if (0xE000 <= cp <= 0xF8FF or cp >= 0xF0000)
+						else 'pub'
+					)
+					f.write('</div><div class="gsc %s">U+%04X</div></div><!--\n' % (pubpri, cp))
+				f.write('--></div>\n\n')
+		# Write HTML file
+		if eotFile is None:
+			eotFile = os.path.splitext(os.path.basename(self.fontFile))[0] + '.eot'
+		if ttfFile is None:
+			ttfFile = os.path.splitext(os.path.basename(self.fontFile))[0] + '.ttf'
+		font = getSansSerifFont(16)
+		with open(path, 'w') as f:
+			f.write('<html>\n<head>\n')
+			f.write('<style>\n')
+			f.write('@font-face { font-family: "sp"; src: url(%s); src: url(%s) format("truetype"); }\n' % (eotFile, ttfFile))
+			f.write('* { margin: 0; padding: 0; }\n')
+			f.write('body { font-family: sans-serif; padding: 0 16px; }\n')
+			f.write('h3 { margin: 16px 0; text-align: center; font-size: 24px; }\n')
+			f.write('.glyphs { margin: 16px 0; padding: 2px; text-align: center; }\n')
+			f.write('.gs { display: inline-block; width: 120px; height: 96px; margin: 2px; text-align: center; background: #f5f5f5; }\n')
+			f.write('.gs.core { background: #ffffee; }\n')
+			f.write('.gs.common { background: #eeffee; }\n')
+			f.write('.gs.uncommon { background: #eeffff; }\n')
+			f.write('.gs.obscure { background: #eeeeff; }\n')
+			f.write('.gs.sandbox { background: #f4eeff; }\n')
+			f.write('.gs.none { background: #f9eeff; }\n')
+			f.write('.gs.name { background: #ffeeff; }\n')
+			f.write('.gsg { font-family: "sp"; font-size: 48px; line-height: 58px; }\n')
+			f.write('.gsn { font-size: 16px; }\n')
+			f.write('.gsc { font-size: 12px; }\n')
+			f.write('.gsc.pri { opacity: 0.2; }\n')
+			f.write('</style>\n')
+			f.write('</head>\n<body>\n\n')
+			writeCategory(f, font, 'core', 'Core Words')
+			writeCategory(f, font, 'common', 'Common Words')
+			writeCategory(f, font, 'uncommon', 'Uncommon Words')
+			writeCategory(f, font, 'obscure', 'Obscure Words')
+			writeCategory(f, font, 'sandbox', 'Sandbox Words')
+			writeCategory(f, font, 'none', 'Uncategorized Words')
+			writeCategory(f, font, 'name', 'Name Glyphs')
+			writeCategory(f, font, 'compound', 'Compound Glyphs')
+			f.write('</body>\n</html>\n')
+
 # --- Parsing arguments to this script -----------------------------------------
 
 def main(args):
@@ -721,6 +872,10 @@ def main(args):
 	inputFile = 'sitelenpona.txt'
 	asciiFile = 'spascii.fea'
 	outputFile = 'sitelenpona.fea'
+	# Options for glyph list
+	glyphListHtmlFile = None
+	glyphListEotFile = None
+	glyphListTtfFile = None
 	# Options for ASCII sequences
 	spaces = None
 	joiners = None
@@ -738,11 +893,17 @@ def main(args):
 				asciiFile = arg
 			if argType == '-o':
 				outputFile = arg
+			if argType == '-g':
+				glyphListHtmlFile = arg
+			if argType == '-e':
+				glyphListEotFile = arg
+			if argType == '-t':
+				glyphListTtfFile = arg
 			if argType == '-r':
 				rsubDepth = int(arg)
 			argType = None
 		elif arg.startswith('-'):
-			if arg in ['-f', '-i', '-a', '-o', '-r']:
+			if arg in ['-f', '-i', '-a', '-o', '-g', '-e', '-t', '-r']:
 				argType = arg
 			elif arg == '-s':
 				spaces = True
@@ -769,6 +930,8 @@ def main(args):
 		gc.parseInfoFinish()
 		gc.writeAsciiSequences(asciiFile, spaces, joiners, webkitFix)
 		gc.writeFeatureFile(outputFile, rsubDepth)
+		if glyphListHtmlFile is not None:
+			gc.writeGlyphListHtmlFile(glyphListHtmlFile, glyphListEotFile, glyphListTtfFile)
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
