@@ -297,7 +297,18 @@ class GlyphCollection:
 		self.addAutocartoucheRule(False, 'U+F1C7E-F1C7F')  # titi pula format control characters
 		self.addAutocartoucheRule(False, '^.+[.](cartouche|extension|kijext|kijend|ccart|cext|ecart|eext)$')
 
-	def writeAsciiSequences(self, path, spaces=None, joiners=None, webkitFix=None):
+	def writeAsciiEscapeSequences(self, f):
+		escaped = [gn for gn in self.widths.keys() if gn.endswith('.esc')]
+		escapable = [gn.rsplit('.', 1)[0] for gn in escaped]
+		if escapable:
+			f.write('feature liga {\n\n')
+			f.write('  # Escape sequences\n')
+			for gn in escapable:
+				f.write('  sub backslash %s by %s.esc;\n' % (gn, gn))
+			f.write('\n')
+			f.write('} liga;\n\n')
+
+	def writeAsciiSequences(self, f, spaces=None, joiners=None, webkitFix=None, commaFix=False):
 		# Check parameters
 		zeroWidthSpace = (self.widths['space'] == 0)
 		allJoinersAscii = all(x in self.asciiSequences and self.asciiSequences[x].name == JOINERS[x] for x in JOINERS.keys())
@@ -315,10 +326,7 @@ class GlyphCollection:
 			print('WARNING: WebKit fix being applied to font with non-zero-width space', file=sys.stderr)
 		if not webkitFix and zeroWidthSpace:
 			print('WARNING: WebKit fix not being applied to font with zero-width space', file=sys.stderr)
-		# Gather escape sequences
-		escaped = [gn for gn in self.widths.keys() if gn.endswith('.esc')]
-		escapable = [gn.rsplit('.', 1)[0] for gn in escaped]
-		# Gather (non-escape) sequences grouped by length
+		# Gather sequences grouped by length
 		sequences = {}
 		if joiners:
 			for k in self.joinerSequences.keys():
@@ -329,17 +337,13 @@ class GlyphCollection:
 					sequences[len(s)][s] = self.joinerSequences[k]
 		for k in self.asciiSequences.keys():
 			s = tuple(psNames(k))
-			if len(s) not in sequences:
-				sequences[len(s)] = {}
-			sequences[len(s)][s] = self.asciiSequences[k]
+			if not commaFix or any(x != 'comma' for x in s):
+				if len(s) not in sequences:
+					sequences[len(s)] = {}
+				sequences[len(s)][s] = self.asciiSequences[k]
 		# Write features to file
-		with open(path, 'w') as f:
+		if sequences or webkitFix:
 			f.write('feature liga {\n\n')
-			if escapable:
-				f.write('  # Escape sequences\n')
-				for gn in escapable:
-					f.write('  sub backslash %s by %s.esc;\n' % (gn, gn))
-				f.write('\n')
 			for l in sorted(sequences.keys(), reverse=True):
 				if spaces:
 					f.write('  # Sequences of length %d (%d + space)\n' % (l + 1, l))
@@ -379,6 +383,17 @@ class GlyphCollection:
 			if len(s) not in sequences:
 				sequences[len(s)] = {}
 			sequences[len(s)][s] = self.joinerSequences[k]
+		# Write features to file
+		if sequences:
+			f.write('feature rlig {\n\n')
+			for l in sorted(sequences.keys(), reverse=True):
+				f.write('  # Sequences of length %d\n' % l)
+				for s in sorted(sequences[l].keys()):
+					f.write('  sub %s by %s;%s\n' % (' '.join(s), sequences[l][s].name, sequences[l][s].outputComment()))
+				f.write('\n')
+			f.write('} rlig;\n\n')
+
+	def writeTallySequences(self, f):
 		# Find maximum number of tally marks
 		maxTally = 0
 		maxTallySequence = ','
@@ -386,20 +401,15 @@ class GlyphCollection:
 			maxTally += 1
 			maxTallySequence += ','
 		# Write features to file
-		f.write('feature rlig {\n\n')
-		for l in sorted(sequences.keys(), reverse=True):
-			f.write('  # Sequences of length %d\n' % l)
-			for s in sorted(sequences[l].keys()):
-				f.write('  sub %s by %s;%s\n' % (' '.join(s), sequences[l][s].name, sequences[l][s].outputComment()))
-			f.write('\n')
 		if maxTally > 1:
+			f.write('feature rlig {\n\n')
 			gc = self.asciiSequences[','].outputClass()
 			f.write('  # Tally marks\n')
 			for n in range(maxTally, 1, -1):
 				g = self.asciiSequences[maxTallySequence[0:n]]
 				f.write('  sub %s by %s;%s\n' % (' '.join([gc] * n), g.name, g.outputComment()))
 			f.write('\n')
-		f.write('} rlig;\n\n')
+			f.write('} rlig;\n\n')
 
 	def generatePairs(self, g1, g2):
 		g1comment = g1.outputComment()
@@ -451,7 +461,7 @@ class GlyphCollection:
 				for name in glyph.names:
 					yield name
 
-	def writeExtensionFeatures(self, f, rsubDepth=16):
+	def writeExtensionFeatures(self, f, rsubDepth=16, commaFix=False):
 		# Gather glyph names
 		cartGN = [gn for gn in self.widths.keys() if gn.endswith('.cartouche')]
 		extGN = [gn for gn in self.widths.keys() if gn.endswith('.extension')]
@@ -463,6 +473,18 @@ class GlyphCollection:
 		extlessGN.extend(gn + '.esc' for gn in extEscGN)
 		cartGN.extend(gn + '.cartouche' for gn in cartEscGN)
 		extGN.extend(gn + '.extension' for gn in extEscGN)
+		# Replace commas in cartouches with tally marks, if requested
+		if commaFix and ('uF199E' in self.widths):
+			try:
+				cartGN[cartlessGN.index('comma')] = 'uF199E'
+			except ValueError:
+				cartlessGN.append('comma')
+				cartGN.append('uF199E')
+			try:
+				extGN[extlessGN.index('comma')] = 'uF199E'
+			except ValueError:
+				extlessGN.append('comma')
+				extGN.append('uF199E')
 		cartZW = sorted(int(gn[1:-6]) for gn in self.widths.keys() if re.match(r'^z[0-9]+[.]ccart$', gn) and '%s.ecart' % gn[0:-6] in self.widths)
 		extZW = sorted(int(gn[1:-5]) for gn in self.widths.keys() if re.match(r'^z[0-9]+[.]cext$', gn) and '%s.eext' % gn[0:-5] in self.widths)
 		fxPairs = sorted(set(self.getForwardExtendablePairs()))
@@ -776,11 +798,22 @@ class GlyphCollection:
 					f.write('  sub %s by %s;%s\n' % (c, replacements[0], self.glyphsByName[c].outputComment()))
 			f.write('} %s;\n\n' % feature)
 
-	def writeFeatureFile(self, path, rsubDepth=16):
+	def writeFeatureFile(self, path, rsubDepth=16, ascii=None, spaces=None, joiners=None, webkitFix=None, commaFix=None):
+		if commaFix is None:
+			commaFix = bool(ascii)
+		if commaFix and not ascii:
+			print('WARNING: Comma substitution requested in font without ASCII substitution', file=sys.stderr)
 		with open(path, 'w') as f:
+			if isinstance(ascii, GlyphCollection):
+				ascii.writeAsciiEscapeSequences(f)
+				ascii.writeAsciiSequences(f, spaces, joiners, webkitFix, commaFix)
+			elif ascii:
+				self.writeAsciiEscapeSequences(f)
+				self.writeAsciiSequences(f, spaces, joiners, webkitFix, commaFix)
 			self.writeVariantFeatures(f)
 			self.writeJoinerSequences(f)
-			self.writeExtensionFeatures(f, rsubDepth)
+			self.writeExtensionFeatures(f, rsubDepth, commaFix)
+			self.writeTallySequences(f)
 
 	def writeGlyphListHtmlFile(self, path, eotFile=None, ttfFile=None):
 		# Build map of usage categories
@@ -897,9 +930,10 @@ class GlyphCollection:
 def main(args):
 	# Default file names
 	fontFile = None
-	inputFile = 'sitelenpona.txt'
-	asciiFile = 'spascii.fea'
-	outputFile = 'sitelenpona.fea'
+	inputFile = None
+	asciiInputFile = None
+	asciiOutputFile = None
+	outputFile = None
 	# Options for glyph list
 	glyphListHtmlFile = None
 	glyphListEotFile = None
@@ -908,6 +942,7 @@ def main(args):
 	spaces = None
 	joiners = None
 	webkitFix = None
+	commaFix = None
 	rsubDepth = 16
 	# Parse arguments
 	argType = None
@@ -917,8 +952,10 @@ def main(args):
 				fontFile = arg
 			if argType == '-i':
 				inputFile = arg
+			if argType == '-l':
+				asciiInputFile = arg
 			if argType == '-a':
-				asciiFile = arg
+				asciiOutputFile = arg
 			if argType == '-o':
 				outputFile = arg
 			if argType == '-g':
@@ -931,7 +968,7 @@ def main(args):
 				rsubDepth = int(arg)
 			argType = None
 		elif arg.startswith('-'):
-			if arg in ['-f', '-i', '-a', '-o', '-g', '-e', '-t', '-r']:
+			if arg in ['-f', '-i', '-l', '-a', '-o', '-g', '-e', '-t', '-r']:
 				argType = arg
 			elif arg == '-s':
 				spaces = True
@@ -945,19 +982,44 @@ def main(args):
 				webkitFix = True
 			elif arg == '-W':
 				webkitFix = False
+			elif arg == '-c':
+				commaFix = True
+			elif arg == '-C':
+				commaFix = False
 			else:
 				print(('Unknown option: %s' % arg), file=sys.stderr)
-		else:
+		elif fontFile is None:
 			fontFile = arg
+		elif inputFile is None:
+			inputFile = arg
+		elif asciiInputFile is None:
+			asciiInputFile = arg
+		else:
+			print(('Unknown option: %s' % arg), file=sys.stderr)
 	# Build feature files
 	if fontFile is None:
 		print('No source font provided', file=sys.stderr)
+	elif inputFile is None and asciiInputFile is None:
+		print('No sitelen pona data provided', file=sys.stderr)
+	elif asciiOutputFile is None and outputFile is None and glyphListHtmlFile is None:
+		print('No output files specified', file=sys.stderr)
 	else:
-		gc = GlyphCollection(fontFile)
-		gc.parseInfoFile(inputFile)
-		gc.parseInfoFinish()
-		gc.writeAsciiSequences(asciiFile, spaces, joiners, webkitFix)
-		gc.writeFeatureFile(outputFile, rsubDepth)
+		if inputFile is not None:
+			gc = GlyphCollection(fontFile)
+			gc.parseInfoFile(inputFile)
+			gc.parseInfoFinish()
+		if asciiInputFile is not None:
+			agc = GlyphCollection(fontFile)
+			agc.parseInfoFile(asciiInputFile)
+			agc.parseInfoFinish()
+		if inputFile is None:
+			gc = agc
+		if asciiInputFile is None:
+			agc = gc
+		if asciiOutputFile is not None:
+			gc.writeFeatureFile(asciiOutputFile, rsubDepth, agc, spaces, joiners, webkitFix, commaFix)
+		if outputFile is not None:
+			gc.writeFeatureFile(outputFile, rsubDepth, None, spaces, joiners, webkitFix, commaFix)
 		if glyphListHtmlFile is not None:
 			gc.writeGlyphListHtmlFile(glyphListHtmlFile, glyphListEotFile, glyphListTtfFile)
 
